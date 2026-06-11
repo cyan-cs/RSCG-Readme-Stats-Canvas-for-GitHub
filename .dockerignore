@@ -1,0 +1,15 @@
+.git
+.github
+.next
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env*
+README.md
+# Keep data directory for SQLite volume mount
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm

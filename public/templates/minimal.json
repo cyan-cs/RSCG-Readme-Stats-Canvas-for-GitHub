@@ -1,0 +1,11 @@
+{
+  "username": "...",
+  "bgColor": "#ffffff",
+  "borderColor": "#e0e0e0",
+  "width": 495,
+  "height": 80,
+  "elements": [
+    {"id":"1","type":"text","x":24,"y":28,"text":"GitHub Stats","fontSize":18,"visible":true,"color":"#333333","textAlign":"left"},
+    {"id":"2","type":"stats","x":24,"y":50,"fontSize":12,"visible":true,"color":"#666666"}
+  ]
+}

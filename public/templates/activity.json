@@ -1,0 +1,14 @@
+{
+  "username": "...",
+  "bgColor": "#222730",
+  "borderColor": "#30363d",
+  "width": 380,
+  "height": 220,
+  "elements": [
+    {"id":"1","type":"text","x":16,"y":30,"text":"GitHub Activity","fontSize":20,"visible":true,"color":"#58a6ff","textAlign":"left"},
+    {"id":"2","type":"stats","x":16,"y":52,"fontSize":14,"visible":true,"color":"#ffffff"},
+    {"id":"3","type":"stars","x":16,"y":124,"fontSize":14,"visible":true,"color":"#e3b341"},
+    {"id":"4","type":"followers","x":140,"y":124,"fontSize":14,"visible":true,"color":"#ffffff"},
+    {"id":"5","type":"languages","x":16,"y":170,"visible":true,"color":"#ffffff"}
+  ]
+}

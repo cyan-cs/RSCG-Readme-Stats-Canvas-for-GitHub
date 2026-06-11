@@ -1,0 +1,48 @@
+{
+  "name": "profilecanvas",
+  "version": "0.1.0",
+  "description": "A visual editor for building dynamic GitHub profile statistics cards.",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20.9.0",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run generate-previews && next build",
+    "start": "next start",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --incremental false",
+    "generate-previews": "npx tsx scripts/generate-template-previews.ts && npx tsx scripts/generate-line-previews.ts"
+  },
+  "dependencies": {
+    "@octokit/graphql": "^9.0.3",
+    "better-sqlite3": "^12.10.0",
+    "lucide-react": "^1.17.0",
+    "next": "^16.2.9",
+    "next-auth": "^5.0.0-beta.31",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^16.2.9",
+    "prettier": "^3.8.4",
+    "tailwindcss": "^4",
+    "tsx": "^4",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.10"
+    }
+  }
+}

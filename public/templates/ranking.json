@@ -1,0 +1,70 @@
+{
+  "username": "cyan-cs",
+  "bgColor": "#0d1117",
+  "borderColor": "#16213e",
+  "width": 495,
+  "height": 185,
+  "elements": [
+    {
+      "id": "1",
+      "type": "text",
+      "x": 24,
+      "y": 53,
+      "text": "Ranking",
+      "fontSize": 30,
+      "visible": true,
+      "color": "#ffffff",
+      "textAlign": "left"
+    },
+    {
+      "id": "2",
+      "type": "rating",
+      "x": 24,
+      "y": 65,
+      "fontSize": 48,
+      "visible": true,
+      "color": "#ffffff"
+    },
+    {
+      "id": "3",
+      "type": "line",
+      "x": 24,
+      "y": 110,
+      "visible": true,
+      "color": "#ffffff",
+      "lineWidth": 447,
+      "lineHeight": 0,
+      "lineStyle": "dotted",
+      "lineStrokeWidth": 1
+    },
+    {
+      "id": "4",
+      "type": "stars",
+      "x": 24,
+      "y": 130,
+      "fontSize": 14,
+      "visible": true,
+      "color": "#ffffff"
+    },
+    {
+      "id": "5",
+      "type": "followers",
+      "x": 180,
+      "y": 130,
+      "fontSize": 14,
+      "visible": true,
+      "color": "#ffffff"
+    },
+    {
+      "id": "6",
+      "type": "text",
+      "x": 24,
+      "y": 170,
+      "text": "GitHub Profile Card",
+      "fontSize": 10,
+      "visible": true,
+      "color": "#ffffff",
+      "textAlign": "left"
+    }
+  ]
+}
