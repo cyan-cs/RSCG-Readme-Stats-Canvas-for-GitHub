@@ -523,6 +523,7 @@ export default function EditorPage() {
     y: number;
   } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const previewViewportRef = useRef<HTMLElement>(null);
   const clipboardRef = useRef<CardElement[]>([]);
   const hasLoadedInitial = useRef(false);
   const shiftRef = useRef(false);
@@ -545,6 +546,7 @@ export default function EditorPage() {
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [snapTo8px, setSnapTo8px] = useState(true);
+  const [previewZoom, setPreviewZoom] = useState(1);
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const [widthMode, setWidthMode] = useState<SizeMode>(() => {
     try {
@@ -676,6 +678,26 @@ export default function EditorPage() {
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  useEffect(() => {
+    const viewport = previewViewportRef.current;
+    if (!viewport) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey || event.deltaY === 0) return;
+      event.preventDefault();
+      const direction = event.deltaY < 0 ? 1 : -1;
+      setPreviewZoom((current) =>
+        Math.max(
+          0.25,
+          Math.min(2, Math.round((current + direction * 0.1) * 10) / 10),
+        ),
+      );
+    };
+
+    viewport.addEventListener("wheel", handleWheel, { passive: false });
+    return () => viewport.removeEventListener("wheel", handleWheel);
+  }, []);
 
   const previewSvg = React.useMemo(
     () => generateSVG(config, displayStats, locale),
@@ -3839,8 +3861,18 @@ export default function EditorPage() {
       </button>
 
       {/* MIDDLE: GHOST CANVAS */}
-      <main className="flex-1 relative bg-[#1e1e24] flex flex-col items-center justify-center pt-14 overflow-auto min-w-0">
-        <div className="w-full max-w-[850px] bg-[#0d1117] rounded-lg shadow-2xl border border-[#30363d] flex flex-col min-h-[300px] md:min-h-[550px] my-12 mx-2 md:mx-0">
+      <main
+        ref={previewViewportRef}
+        className="flex-1 relative bg-[#1e1e24] flex flex-col items-start justify-start pt-14 overflow-auto min-w-0"
+      >
+        <div
+          className="shrink-0 bg-[#0d1117] rounded-lg shadow-2xl border border-[#30363d] flex flex-col my-12 mx-auto"
+          style={{
+            width: Math.max(850, config.width + 296),
+            minHeight: Math.max(550, config.height + 184),
+            zoom: previewZoom,
+          }}
+        >
           <div className="h-12 bg-[#161b22] border-b border-[#30363d] flex items-center px-4 gap-4 text-[#7d8590] text-xs font-semibold rounded-t-lg">
             <GitBranch size={16} />
             <div className="flex gap-4">
@@ -4027,12 +4059,7 @@ export default function EditorPage() {
                   }}
                   className={`relative shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-no-repeat group/canvas ring-1 ${placingType ? "ring-[#7d2ae8] ring-2" : "ring-white/5"}`}
                   style={{
-                    width: Math.min(
-                      config.width,
-                      typeof window !== "undefined"
-                        ? window.innerWidth - 20
-                        : config.width,
-                    ),
+                    width: config.width,
                     height: config.height,
                     backgroundColor: config.bgColor,
                     border: `1px solid ${config.borderColor}`,
