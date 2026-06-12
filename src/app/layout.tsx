@@ -41,12 +41,21 @@ export async function generateMetadata(): Promise<Metadata> {
         ko: "ko_KR",
         zh: "zh_CN",
       }[locale],
-      images: [{ url: "/api/og", width: 495, height: 200 }],
+      images: [
+        {
+          url: "/api/og",
+          width: 1200,
+          height: 630,
+          type: "image/png",
+          alt: "RSCG visual GitHub stats card editor and login count",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: ["/api/og"],
     },
   };
 }

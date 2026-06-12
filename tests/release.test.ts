@@ -14,6 +14,7 @@ import {
   cardConfigSchema,
   cardElementSchema,
 } from "../src/lib/validation";
+import { formatMetricCount } from "../src/lib/site-metrics";
 
 const validConfig: CardConfig = {
   username: "octocat",
@@ -119,4 +120,10 @@ test("request bodies are limited by header and streamed size", async () => {
     ),
     BodyTooLargeError,
   );
+});
+
+test("site metric counts are formatted safely", () => {
+  assert.equal(formatMetricCount(1234567), "1,234,567");
+  assert.equal(formatMetricCount(-20), "0");
+  assert.equal(formatMetricCount(12.9), "12");
 });

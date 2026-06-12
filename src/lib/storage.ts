@@ -56,6 +56,11 @@ function getDb(): DatabaseType {
       count INTEGER NOT NULL,
       PRIMARY KEY (scope, subject)
     );
+    CREATE TABLE IF NOT EXISTS site_metrics (
+      metric_key TEXT PRIMARY KEY,
+      value INTEGER NOT NULL DEFAULT 0 CHECK(value >= 0),
+      updated_at INTEGER NOT NULL
+    );
   `);
 
   migrateFromJson(db);
@@ -217,6 +222,58 @@ export async function consumeRateLimit(
   });
 
   return consume();
+}
+
+const METRIC_KEY_PATTERN = /^[a-z][a-z0-9_.-]{0,63}$/;
+
+function assertMetricKey(metricKey: string): void {
+  if (!METRIC_KEY_PATTERN.test(metricKey)) {
+    throw new Error(`Invalid site metric key: ${metricKey}`);
+  }
+}
+
+export async function incrementSiteMetric(
+  metricKey: string,
+  amount = 1,
+): Promise<number> {
+  assertMetricKey(metricKey);
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new Error("Metric increment must be a positive safe integer");
+  }
+
+  const db = getDb();
+  const now = Date.now();
+  db.prepare(
+    `INSERT INTO site_metrics (metric_key, value, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(metric_key)
+     DO UPDATE SET value = value + excluded.value, updated_at = excluded.updated_at`,
+  ).run(metricKey, amount, now);
+
+  const row = db
+    .prepare("SELECT value FROM site_metrics WHERE metric_key = ?")
+    .get(metricKey) as { value: number };
+  return row.value;
+}
+
+export async function getSiteMetrics(
+  metricKeys: readonly string[],
+): Promise<Record<string, number>> {
+  const uniqueKeys = [...new Set(metricKeys)];
+  uniqueKeys.forEach(assertMetricKey);
+  if (uniqueKeys.length === 0) return {};
+
+  const placeholders = uniqueKeys.map(() => "?").join(", ");
+  const rows = getDb()
+    .prepare(
+      `SELECT metric_key, value
+       FROM site_metrics
+       WHERE metric_key IN (${placeholders})`,
+    )
+    .all(...uniqueKeys) as Array<{ metric_key: string; value: number }>;
+  const values = Object.fromEntries(uniqueKeys.map((key) => [key, 0]));
+  for (const row of rows) values[row.metric_key] = row.value;
+  return values;
 }
 
 process.on("exit", () => {

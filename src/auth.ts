@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
+import { recordSuccessfulSignIn } from "@/lib/site-metrics";
 
 declare module "next-auth" {
   interface Session {
@@ -51,6 +52,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.location = token.location;
       }
       return session;
+    },
+  },
+  events: {
+    async signIn() {
+      try {
+        await recordSuccessfulSignIn();
+      } catch (error) {
+        // Analytics must never prevent a successful authentication.
+        console.error("[metrics] Failed to record successful sign-in:", error);
+      }
     },
   },
   pages: {
