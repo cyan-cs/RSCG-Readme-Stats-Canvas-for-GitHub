@@ -44,6 +44,7 @@ English | [日本語](./docs/ja/README.md) | [简体中文](./docs/ch/README.md)
 ### Local Development
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/cyan-cs/RSCG-Readme-Stats-Canvas-for-GitHub.git
    cd RSCG-Readme-Stats-Canvas-for-GitHub
@@ -85,6 +86,52 @@ English | [日本語](./docs/ja/README.md) | [简体中文](./docs/ch/README.md)
      profilecanvas
    ```
    _Note: Mounting the `/app/data` volume is required to persist your cards database._
+
+---
+
+## Automatic Deployment
+
+The `Deploy` workflow runs after the `CI` workflow succeeds for a push to
+`main`. It connects to the server over SSH, checks out the tested commit,
+builds a Docker image, replaces the running container, and restores the
+previous container if the health check fails.
+
+### Server Requirements
+
+- Linux with Git and Docker installed
+- An existing clone of this repository
+- An SSH user that can run Docker
+- Nginx or Caddy proxying to `127.0.0.1:3000`
+- A persistent environment file, such as `/etc/rscg/app.env`
+- A persistent SQLite directory, such as `/var/lib/rscg`
+
+The deployment does not store `.env` or SQLite data inside the repository.
+They remain unchanged when tracked files are reset to the deployed commit.
+
+### GitHub Configuration
+
+Configure these repository or `production` environment secrets:
+
+| Secret                | Description                                       |
+| --------------------- | ------------------------------------------------- |
+| `DEPLOY_HOST`         | Server hostname or IP address                     |
+| `DEPLOY_USER`         | SSH user                                          |
+| `DEPLOY_SSH_KEY`      | Private key for the deployment SSH user           |
+| `DEPLOY_KNOWN_HOSTS`  | Trusted server host key entry                     |
+| `DISCORD_WEBHOOK_URL` | Discord webhook for deployment results (optional) |
+
+Configure these repository variables:
+
+| Variable           | Description                                      | Default             |
+| ------------------ | ------------------------------------------------ | ------------------- |
+| `DEPLOY_PATH`      | Absolute path to the repository on the server    | Required            |
+| `DEPLOY_PORT`      | SSH port                                         | `22`                |
+| `DEPLOY_ENV_FILE`  | Absolute path to the persistent environment file | `/etc/rscg/app.env` |
+| `DEPLOY_DATA_PATH` | Absolute path to the persistent SQLite directory | `/var/lib/rscg`     |
+
+The server-side container is named `rscg`, binds only to
+`127.0.0.1:3000`, uses `--restart unless-stopped`, and mounts the configured
+data directory at `/app/data`.
 
 ---
 

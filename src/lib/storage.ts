@@ -145,6 +145,15 @@ export async function listUsernames(): Promise<string[]> {
   return rows.map((r) => r.username);
 }
 
+export async function checkStorageHealth(): Promise<void> {
+  const result = getDb().prepare("SELECT 1 AS ok").get() as
+    | { ok: number }
+    | undefined;
+  if (result?.ok !== 1) {
+    throw new Error("SQLite health check failed");
+  }
+}
+
 export async function saveSharedTemplate(
   id: string,
   config: CardConfig,

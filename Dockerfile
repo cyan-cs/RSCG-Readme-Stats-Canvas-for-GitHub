@@ -41,4 +41,6 @@ RUN mkdir -p /app/data \
   && chmod 0755 /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
+HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=6 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))"]
 ENTRYPOINT ["docker-entrypoint.sh"]

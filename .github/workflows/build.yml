@@ -1,0 +1,176 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      )
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+      DEPLOY_ENV_FILE: ${{ vars.DEPLOY_ENV_FILE || '/etc/rscg/app.env' }}
+      DEPLOY_DATA_PATH: ${{ vars.DEPLOY_DATA_PATH || '/var/lib/rscg' }}
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+    steps:
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in \
+            DEPLOY_HOST \
+            DEPLOY_USER \
+            DEPLOY_SSH_KEY \
+            DEPLOY_KNOWN_HOSTS \
+            DEPLOY_PATH \
+            DEPLOY_ENV_FILE \
+            DEPLOY_DATA_PATH \
+            DEPLOY_SHA
+          do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::$name is not configured"
+              exit 1
+            fi
+          done
+
+          case "$DEPLOY_PORT" in
+            *[!0-9]* | "")
+              echo "::error::DEPLOY_PORT must be numeric"
+              exit 1
+              ;;
+          esac
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy tested commit
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            bash -s -- \
+              "$DEPLOY_PATH" \
+              "$DEPLOY_SHA" \
+              "$DEPLOY_ENV_FILE" \
+              "$DEPLOY_DATA_PATH" <<'REMOTE'
+          set -euo pipefail
+
+          deploy_path=$1
+          deploy_sha=$2
+          env_file=$3
+          data_path=$4
+
+          cd "$deploy_path"
+          git fetch --prune origin main
+
+          if ! git cat-file -e "$deploy_sha^{commit}"; then
+            echo "Commit $deploy_sha was not fetched from origin"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$deploy_sha" origin/main; then
+            echo "Commit $deploy_sha is not part of origin/main"
+            exit 1
+          fi
+
+          git reset --hard "$deploy_sha"
+
+          DEPLOY_ENV_FILE="$env_file" \
+          DEPLOY_DATA_PATH="$data_path" \
+          bash ./scripts/deploy.sh "$deploy_sha"
+          REMOTE
+
+      - name: Notify Discord
+        if: always()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DEPLOY_RESULT: ${{ job.status }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${DISCORD_WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL is not configured; skipping notification"
+            exit 0
+          fi
+
+          if [ "$DEPLOY_RESULT" = "success" ]; then
+            color=5763719
+            title="RSCG deployment succeeded"
+          else
+            color=15548997
+            title="RSCG deployment failed"
+          fi
+
+          run_url="$SERVER_URL/$REPOSITORY/actions/runs/$RUN_ID"
+          short_sha=${DEPLOY_SHA:0:12}
+          payload=$(jq -n \
+            --arg title "$title" \
+            --arg repository "$REPOSITORY" \
+            --arg sha "$short_sha" \
+            --arg actor "$ACTOR" \
+            --arg url "$run_url" \
+            --argjson color "$color" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  {name: "Repository", value: $repository, inline: true},
+                  {name: "Commit", value: $sha, inline: true},
+                  {name: "Actor", value: $actor, inline: true}
+                ],
+                url: $url
+              }]
+            }')
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            -H 'Content-Type: application/json' \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"
