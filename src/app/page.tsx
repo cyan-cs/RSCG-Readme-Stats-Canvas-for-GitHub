@@ -50,6 +50,8 @@ import {
   Pencil,
   Bookmark,
   Square,
+  MoreHorizontal,
+  Link2,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -391,6 +393,8 @@ export default function EditorPage() {
 
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showPublishOptions, setShowPublishOptions] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<
     { id: number; text: string; type: "error" | "success" }[]
@@ -406,6 +410,7 @@ export default function EditorPage() {
   };
   const [copied, setCopied] = useState(false);
   const [copiedImg, setCopiedImg] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const [snapLines, setSnapLines] = useState<{ x?: number; y?: number }>({});
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -1118,6 +1123,8 @@ export default function EditorPage() {
       if (e.key === "Escape") {
         setShowShortcuts(false);
         setShowShareModal(false);
+        setShowPublishModal(false);
+        setShowPublishOptions(false);
         setShowLangMenu(false);
         setShowSaveModal(false);
         setConfirmModal(null);
@@ -1879,6 +1886,14 @@ export default function EditorPage() {
     }
   };
 
+  const handleCopyPublishedUrl = () => {
+    if (publishedUrl) {
+      navigator.clipboard.writeText(publishedUrl);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    }
+  };
+
   const handleShare = async () => {
     try {
       const res = await fetch("/api/share", {
@@ -2246,9 +2261,13 @@ export default function EditorPage() {
                     headers: { "Content-Type": "application/json" },
                   });
                   if (res.ok) {
-                    setPublishedUrl(
-                      `${window.location.origin}/${config.username}`,
-                    );
+                    const url = `${window.location.origin}/${config.username}`;
+                    setPublishedUrl(url);
+                    setCopied(false);
+                    setCopiedImg(false);
+                    setCopiedUrl(false);
+                    setShowPublishOptions(false);
+                    setShowPublishModal(true);
                     showToast(t("status.published"), "success");
                   } else {
                     const err = await res.json().catch(() => ({}));
@@ -3415,6 +3434,120 @@ export default function EditorPage() {
                 <Copy size={14} />
                 {t("share.copyTextAndLink")}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Publish result modal */}
+      {showPublishModal && publishedUrl && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => {
+            setShowPublishModal(false);
+            setShowPublishOptions(false);
+          }}
+        >
+          <div
+            className="w-full max-w-xl rounded-xl border border-[#35313d] bg-[#121217] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.65)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  {t("publishDialog.title")}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                  {t("publishDialog.description")}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPublishModal(false);
+                  setShowPublishOptions(false);
+                }}
+                className="rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-[#24222a] hover:text-white"
+                aria-label={t("actions.close")}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <a
+              href={publishedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-lg border border-[#302c37] bg-[#0d0c11] p-3 transition-colors hover:border-[#7d2ae8]/60"
+            >
+              <img
+                src={publishedUrl}
+                alt="Profile Card Preview"
+                className="mx-auto max-h-64 max-w-full rounded"
+              />
+            </a>
+
+            <a
+              href={publishedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 block truncate text-[10px] text-[#9d5af2] hover:text-[#b985ff] hover:underline"
+            >
+              {publishedUrl}
+            </a>
+
+            <div className="mt-5 flex items-stretch gap-2">
+              <button
+                onClick={handleCopyMD}
+                className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold transition-all ${
+                  copied
+                    ? "bg-green-600 text-white"
+                    : "bg-[#7d2ae8] text-white shadow-lg shadow-[#7d2ae8]/20 hover:bg-[#8b3bed]"
+                }`}
+              >
+                {copied ? <Check size={17} /> : <Copy size={17} />}
+                {copied ? t("status.copiedUpper") : t("actions.copyMarkdown")}
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowPublishOptions((current) => !current)}
+                  className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#35313d] bg-[#1b1a20] text-zinc-400 transition-colors hover:bg-[#26242d] hover:text-white"
+                  title={t("actions.moreOptions")}
+                  aria-label={t("actions.moreOptions")}
+                  aria-expanded={showPublishOptions}
+                >
+                  <MoreHorizontal size={20} />
+                </button>
+
+                {showPublishOptions && (
+                  <div className="absolute bottom-full right-0 z-10 mb-2 w-52 overflow-hidden rounded-lg border border-[#35313d] bg-[#1a191f] p-1.5 shadow-2xl">
+                    <button
+                      onClick={() => {
+                        handleCopyImg();
+                        setShowPublishOptions(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-xs font-semibold text-zinc-300 transition-colors hover:bg-[#292630] hover:text-white"
+                    >
+                      {copiedImg ? <Check size={15} /> : <Copy size={15} />}
+                      {copiedImg
+                        ? t("status.copiedUpper")
+                        : t("actions.copyImageTag")}
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleCopyPublishedUrl();
+                        setShowPublishOptions(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-xs font-semibold text-zinc-300 transition-colors hover:bg-[#292630] hover:text-white"
+                    >
+                      {copiedUrl ? <Check size={15} /> : <Link2 size={15} />}
+                      {copiedUrl
+                        ? t("status.copiedUpper")
+                        : t("actions.copyPublishedUrl")}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -4813,41 +4946,6 @@ export default function EditorPage() {
             </div>
           )}
 
-          {publishedUrl && (
-            <div className="mt-8 p-4 bg-[#7d2ae8]/10 border border-[#7d2ae8]/20 rounded-md space-y-3">
-              <a
-                href={publishedUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-[10px] text-[#7d2ae8] underline break-all hover:text-[#9d5af2]"
-              >
-                {publishedUrl}
-              </a>
-              <img
-                src={publishedUrl}
-                alt="Profile Card Preview"
-                className="w-full rounded border border-[#2a2a32]"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCopyMD}
-                  className={`flex-1 py-2 rounded text-[10px] font-bold flex items-center justify-center gap-2 transition-all ${copied ? "bg-green-600 text-white" : "bg-[#7d2ae8] text-white hover:bg-[#6a22c5]"}`}
-                >
-                  {copied ? <Check size={12} /> : <Copy size={12} />}
-                  {copied ? t("status.copiedUpper") : t("actions.copyMarkdown")}
-                </button>
-                <button
-                  onClick={handleCopyImg}
-                  className={`flex-1 py-2 rounded text-[10px] font-bold flex items-center justify-center gap-2 transition-all ${copiedImg ? "bg-green-600 text-white" : "bg-[#1e1e24] text-zinc-300 border border-[#2a2a32] hover:bg-[#2a2a32]"}`}
-                >
-                  {copiedImg ? <Check size={12} /> : <Copy size={12} />}
-                  {copiedImg
-                    ? t("status.copiedUpper")
-                    : t("actions.copyImageTag")}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </aside>
     </div>
