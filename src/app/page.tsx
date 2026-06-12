@@ -429,6 +429,20 @@ export default function EditorPage() {
   const clipboardRef = useRef<CardElement[]>([]);
   const hasLoadedInitial = useRef(false);
   const shiftRef = useRef(false);
+  const getCanvasPoint = React.useCallback(
+    (clientX: number, clientY: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width / canvas.offsetWidth || 1;
+      const scaleY = rect.height / canvas.offsetHeight || 1;
+      return {
+        x: (clientX - rect.left) / scaleX,
+        y: (clientY - rect.top) / scaleY,
+      };
+    },
+    [],
+  );
 
   // UI state
   const [showGrid, setShowGrid] = useState(true);
@@ -1198,9 +1212,10 @@ export default function EditorPage() {
     const handleMouseMove = (e: MouseEvent) => {
       // Line drawing preview
       if (lineDrawing && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        let rawX = e.clientX - rect.left;
-        let rawY = e.clientY - rect.top;
+        const point = getCanvasPoint(e.clientX, e.clientY);
+        if (!point) return;
+        let rawX = point.x;
+        let rawY = point.y;
         if (shiftRef.current) {
           const dx = rawX - lineDrawing.startX;
           const dy = rawY - lineDrawing.startY;
@@ -1223,9 +1238,10 @@ export default function EditorPage() {
         return;
       }
       if (shapeDrawing && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        let rawX = e.clientX - rect.left;
-        let rawY = e.clientY - rect.top;
+        const point = getCanvasPoint(e.clientX, e.clientY);
+        if (!point) return;
+        let rawX = point.x;
+        let rawY = point.y;
         const constrained = constrainShapePoint(
           shapeDrawing,
           rawX,
@@ -1267,12 +1283,13 @@ export default function EditorPage() {
         return;
       }
       if (elementResizingId && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
         const el = config.elements.find(
           (item) => item.id === elementResizingId,
         );
         if (!el) return;
-        const mouseX = e.clientX - rect.left;
+        const point = getCanvasPoint(e.clientX, e.clientY);
+        if (!point) return;
+        const mouseX = point.x;
         if (el.type === "languages" || el.type === "progress") {
           const minWidth = el.type === "languages" ? LANGUAGE_MIN_WIDTH : 40;
           const maxWidth = el.type === "languages" ? LANGUAGE_MAX_WIDTH : 1200;
@@ -1299,7 +1316,7 @@ export default function EditorPage() {
           return;
         }
         if (el.type === "shape") {
-          const mouseY = e.clientY - rect.top;
+          const mouseY = point.y;
           const rawWidth = Math.max(8, Math.round(mouseX - el.x));
           const rawHeight = Math.max(8, Math.round(mouseY - el.y));
           let shapeWidth = snapTo8px
@@ -1344,22 +1361,24 @@ export default function EditorPage() {
       }
       // Rectangle selection
       if (isRectSelecting && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        setRectCurrent({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        const point = getCanvasPoint(e.clientX, e.clientY);
+        if (!point) return;
+        setRectCurrent(point);
         return;
       }
       if (draggingId && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
         const targetElement = config.elements.find(
           (el) => el.id === draggingId,
         );
         if (!targetElement) return;
+        const point = getCanvasPoint(e.clientX, e.clientY);
+        if (!point) return;
 
         // Endpoint dragging for line elements — direct x2,y2 manipulation
         const ep = draggingEndpointRef.current;
         if (ep && targetElement.type === "line") {
-          const rawMouseX = Math.round(e.clientX - rect.left);
-          const rawMouseY = Math.round(e.clientY - rect.top);
+          const rawMouseX = Math.round(point.x);
+          const rawMouseY = Math.round(point.y);
           const currentX =
             ep === "end"
               ? targetElement.x2 !== undefined
@@ -1397,8 +1416,8 @@ export default function EditorPage() {
           return;
         }
 
-        let newX = Math.round(e.clientX - rect.left - dragOffset.x);
-        let newY = Math.round(e.clientY - rect.top - dragOffset.y);
+        let newX = Math.round(point.x - dragOffset.x);
+        let newY = Math.round(point.y - dragOffset.y);
         // Text 要素: visualTop = y - fontSize - 4 → stored y (baseline) に変換
         if (targetElement.type === "text") {
           newY = newY + (targetElement.fontSize || 16) + 4;
@@ -1624,6 +1643,7 @@ export default function EditorPage() {
     shapeStrokeColor,
     shapeStrokeWidth,
     snapTo8px,
+    getCanvasPoint,
   ]);
 
   if (!mounted || status === "loading" || !isInitialized) {
@@ -1815,8 +1835,11 @@ export default function EditorPage() {
       );
     }
     setDraggingId(el.id);
-    const rect = e.currentTarget.getBoundingClientRect();
-    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const point = getCanvasPoint(e.clientX, e.clientY);
+    if (!point) return;
+    const visualY =
+      el.type === "text" ? el.y - (el.fontSize || 16) - 4 : el.y;
+    setDragOffset({ x: point.x - el.x, y: point.y - visualY });
     e.preventDefault();
   };
 
@@ -1894,7 +1917,7 @@ export default function EditorPage() {
 
   return (
     <div
-      className="flex h-screen w-full bg-[#1e1e24] text-[#e1e1e6] font-sans overflow-hidden select-none"
+      className="editor-scale flex bg-[#1e1e24] text-[#e1e1e6] font-sans overflow-hidden select-none"
       onClick={() => {
         setSelectedIds([]);
         setEditingId(null);
@@ -3475,10 +3498,10 @@ export default function EditorPage() {
                       (lineDrawing?.phase === "waiting" ||
                         shapeDrawing?.phase === "waiting")
                     ) {
-                      const rect = canvasRef.current?.getBoundingClientRect();
-                      if (!rect) return;
-                      const x = snapValue(e.clientX - rect.left);
-                      const y = snapValue(e.clientY - rect.top);
+                      const point = getCanvasPoint(e.clientX, e.clientY);
+                      if (!point) return;
+                      const x = snapValue(point.x);
+                      const y = snapValue(point.y);
                       if (lineDrawing?.phase === "waiting") {
                         setLineDrawing((prev) =>
                           prev
@@ -3514,10 +3537,10 @@ export default function EditorPage() {
                     }
                     // Place mode: click-to-place on canvas
                     if (placingType && e.button === 0) {
-                      const rect = canvasRef.current?.getBoundingClientRect();
-                      if (!rect) return;
-                      const x = snapValue(e.clientX - rect.left);
-                      const y = snapValue(e.clientY - rect.top);
+                      const point = getCanvasPoint(e.clientX, e.clientY);
+                      if (!point) return;
+                      const x = snapValue(point.x);
+                      const y = snapValue(point.y);
                       const type = placingType;
                       if (type === "line") {
                         setLineDrawing({
@@ -3553,17 +3576,11 @@ export default function EditorPage() {
                       return;
                     const target = e.target as HTMLElement;
                     if (target.closest("[data-el-id]")) return;
-                    const rect = canvasRef.current?.getBoundingClientRect();
-                    if (!rect) return;
+                    const point = getCanvasPoint(e.clientX, e.clientY);
+                    if (!point) return;
                     setIsRectSelecting(true);
-                    setRectStart({
-                      x: e.clientX - rect.left,
-                      y: e.clientY - rect.top,
-                    });
-                    setRectCurrent({
-                      x: e.clientX - rect.left,
-                      y: e.clientY - rect.top,
-                    });
+                    setRectStart(point);
+                    setRectCurrent(point);
                     setSelectedIds([]);
                   }}
                   onClick={(e) => {
@@ -3596,12 +3613,12 @@ export default function EditorPage() {
                       } catch {}
                     }
                     if (!type) return;
-                    const rect = canvasRef.current?.getBoundingClientRect();
-                    if (!rect) return;
+                    const point = getCanvasPoint(e.clientX, e.clientY);
+                    if (!point) return;
                     addElementAt(
                       type,
-                      e.clientX - rect.left,
-                      e.clientY - rect.top,
+                      point.x,
+                      point.y,
                       shapeType || selectedShapeType,
                       overrides,
                     );

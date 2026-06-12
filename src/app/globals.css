@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.editor-scale {
+  width: 100vw;
+  height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .editor-scale {
+    width: 80vw;
+    height: 80vh;
+    transform: scale(1.25);
+    transform-origin: top left;
+  }
+}
