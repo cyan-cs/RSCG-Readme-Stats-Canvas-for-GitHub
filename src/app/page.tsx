@@ -2689,7 +2689,7 @@ export default function EditorPage() {
       </header>
 
       <aside
-        className="w-[72px] bg-[#121217] pt-14 flex flex-col items-center text-white z-20 overflow-y-auto scrollbar-thin"
+        className="w-[72px] bg-[#121217] pt-14 flex flex-col items-center text-white z-20 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center py-4">
@@ -2810,7 +2810,7 @@ export default function EditorPage() {
       {/* Template drawer */}
       {showTemplates && (
         <aside
-          className={`w-[240px] bg-[#121217] flex flex-col z-20 border-l border-[#2a2a32] overflow-y-auto scrollbar-thin md:relative md:flex md:pt-14 fixed left-0 top-14 bottom-0 pt-4 animate-in slide-in-from-left-2 duration-150`}
+          className={`w-[240px] bg-[#121217] flex flex-col z-20 border-l border-[#2a2a32] overflow-y-auto md:relative md:flex md:pt-14 fixed left-0 top-14 bottom-0 pt-4 animate-in slide-in-from-left-2 duration-150`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-4 pt-4 pb-0">
@@ -3292,7 +3292,7 @@ export default function EditorPage() {
             onClick={() => setShowLineDrawer(false)}
           />
           <aside
-            className={`w-[240px] bg-[#121217] flex flex-col z-20 border-l border-[#2a2a32] overflow-y-auto scrollbar-thin md:relative md:flex md:pt-14 fixed left-0 top-14 bottom-0 pt-4 animate-in slide-in-from-left-2 duration-150`}
+            className={`w-[240px] bg-[#121217] flex flex-col z-20 border-l border-[#2a2a32] overflow-y-auto md:relative md:flex md:pt-14 fixed left-0 top-14 bottom-0 pt-4 animate-in slide-in-from-left-2 duration-150`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 pt-4 pb-0">
@@ -3665,7 +3665,7 @@ export default function EditorPage() {
             onClick={() => setShowSavedDrawer(false)}
           />
           <aside
-            className={`w-[240px] bg-[#121217] flex flex-col z-20 border-l border-[#2a2a32] overflow-y-auto scrollbar-thin md:relative md:flex md:pt-14 fixed left-0 top-14 bottom-0 pt-4 animate-in slide-in-from-left-2 duration-150`}
+            className={`w-[240px] bg-[#121217] flex flex-col z-20 border-l border-[#2a2a32] overflow-y-auto md:relative md:flex md:pt-14 fixed left-0 top-14 bottom-0 pt-4 animate-in slide-in-from-left-2 duration-150`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 pt-4 pb-0">
