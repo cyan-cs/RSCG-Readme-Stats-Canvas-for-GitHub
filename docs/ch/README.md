@@ -20,7 +20,7 @@
 - **高性能**: 通过 ETag 缓存和 304 支持优化 SVG 渲染，提供快速的访问体验。
 
 ### 技术栈
-- **框架**: Next.js 15+ (App Router)
+- **框架**: Next.js 16 (App Router)
 - **语言**: TypeScript
 - **样式**: Tailwind CSS 4
 - **数据库**: SQLite (通过 `better-sqlite3`)

@@ -20,7 +20,7 @@
 - **고성능**: ETag 캐싱 및 304 Not Modified 지원을 통해 최적화된 SVG 렌더링을 제공합니다.
 
 ### 기술 스택
-- **프레임워크**: Next.js 15+ (App Router)
+- **프레임워크**: Next.js 16 (App Router)
 - **언어**: TypeScript
 - **스타일링**: Tailwind CSS 4
 - **데이터베이스**: SQLite (`better-sqlite3` 사용)

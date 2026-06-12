@@ -25,7 +25,7 @@ English | [日本語](./docs/ja/README.md) | [简体中文](./docs/ch/README.md)
 
 ## Tech Stack
 
-- **Framework**: Next.js 15+ (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **Database**: SQLite (via `better-sqlite3`)

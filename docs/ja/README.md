@@ -20,7 +20,7 @@
 - **ハイパフォーマンス**: ETag キャッシュと 304 Not Modified サポートにより、高速な画像配信を実現。
 
 ### 技術スタック
-- **フレームワーク**: Next.js 15+ (App Router)
+- **フレームワーク**: Next.js 16 (App Router)
 - **言語**: TypeScript
 - **スタイリング**: Tailwind CSS 4
 - **データベース**: SQLite (via `better-sqlite3`)
