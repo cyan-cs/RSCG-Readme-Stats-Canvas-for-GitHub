@@ -6,6 +6,8 @@ import {
   CardConfig,
   ElementType,
   ShapeType,
+  DEFAULT_LANGUAGE_COUNT,
+  MAX_LANGUAGE_COUNT,
   LANGUAGE_MAX_WIDTH,
   LANGUAGE_MIN_WIDTH,
   estimateTextWidth,
@@ -1826,6 +1828,7 @@ export default function EditorPage() {
         LANGUAGE_MIN_WIDTH,
         Math.min(320, config.width - 64, LANGUAGE_MAX_WIDTH),
       );
+      base.languageCount = DEFAULT_LANGUAGE_COUNT;
     }
     if (type === "calendar") base.calendarFormat = "both";
     if (type === "line") {
@@ -4192,6 +4195,7 @@ export default function EditorPage() {
                     const languageLegend = getLanguageLegend(
                       displayStats.languages,
                       t("common.other"),
+                      el.languageCount ?? DEFAULT_LANGUAGE_COUNT,
                     );
                     const languageNameWidths = languageLegend.map(
                       (lang) =>
@@ -4906,6 +4910,43 @@ export default function EditorPage() {
 
                   {firstSelectedElement.type === "languages" && (
                     <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-zinc-500 uppercase">
+                          {t("inspector.languages.count")}
+                        </label>
+                        <select
+                          value={
+                            firstSelectedElement.languageCount ??
+                            DEFAULT_LANGUAGE_COUNT
+                          }
+                          onFocus={saveToHistory}
+                          onChange={(e) =>
+                            updateSelected({
+                              languageCount: Math.max(
+                                1,
+                                Math.min(
+                                  MAX_LANGUAGE_COUNT,
+                                  parseInt(e.target.value) ||
+                                    DEFAULT_LANGUAGE_COUNT,
+                                ),
+                              ),
+                            })
+                          }
+                          className="w-full rounded border border-[#2a2a32] bg-[#1e1e24] px-2 py-1.5 text-xs text-zinc-300"
+                        >
+                          {Array.from(
+                            { length: MAX_LANGUAGE_COUNT },
+                            (_, index) => index + 1,
+                          ).map((count) => (
+                            <option key={count} value={count}>
+                              {count}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[8px] text-zinc-600">
+                          {t("inspector.languages.countHint")}
+                        </p>
+                      </div>
                       <div className="space-y-1">
                         <label className="text-[9px] font-bold text-zinc-500 uppercase">
                           {t("inspector.languages.width")}

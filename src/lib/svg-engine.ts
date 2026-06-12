@@ -30,6 +30,8 @@ export type ShapeType =
 
 export const LANGUAGE_MIN_WIDTH = 80;
 export const LANGUAGE_MAX_WIDTH = 800;
+export const DEFAULT_LANGUAGE_COUNT = 6;
+export const MAX_LANGUAGE_COUNT = 10;
 
 export interface CardElement {
   id: string;
@@ -61,6 +63,7 @@ export interface CardElement {
   lineStrokeWidth?: number;
   progressBarWidth?: number;
   languageBarWidth?: number;
+  languageCount?: number;
   shapeType?: ShapeType;
   shapeWidth?: number;
   shapeHeight?: number;
@@ -224,18 +227,25 @@ export interface LanguageLegendItem {
 export function getLanguageLegend(
   languages: GitHubStats["languages"],
   otherLabel = "Other",
+  languageCount = DEFAULT_LANGUAGE_COUNT,
 ): LanguageLegendItem[] {
   const valid = languages.filter(
     (language) => Number.isFinite(language.size) && language.size > 0,
   );
   if (valid.length === 0) return [];
 
-  const visible = valid.slice(0, 5).map((language) => ({ ...language }));
-  if (valid.length > 5) {
+  const limit = Math.max(
+    1,
+    Math.min(MAX_LANGUAGE_COUNT, Math.trunc(languageCount)),
+  );
+  const visible = valid.slice(0, limit).map((language) => ({ ...language }));
+  if (valid.length > limit) {
     visible.push({
       name: otherLabel,
       color: "#8b949e",
-      size: valid.slice(5).reduce((sum, language) => sum + language.size, 0),
+      size: valid
+        .slice(limit)
+        .reduce((sum, language) => sum + language.size, 0),
     });
   }
 
@@ -881,6 +891,7 @@ function renderLanguages(
   const legendItems = getLanguageLegend(
     stats.languages,
     translate(locale, "common.other"),
+    el.languageCount ?? DEFAULT_LANGUAGE_COUNT,
   );
   let currentX = 0;
   const clipId = safeSvgId("clip-bar", el.id);

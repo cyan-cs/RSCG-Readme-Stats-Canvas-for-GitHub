@@ -124,6 +124,8 @@ export const ja = {
   "inspector.height": "高さ",
   "inspector.languages.width": "言語バーの幅",
   "inspector.languages.widthHint": "幅の範囲: 80〜800px",
+  "inspector.languages.count": "表示する言語数",
+  "inspector.languages.countHint": "超過した言語は「その他」にまとめます。",
   "inspector.layout": "レイアウト",
   "inspector.line.endPoint": "終了点",
   "inspector.line.startPoint": "開始点",

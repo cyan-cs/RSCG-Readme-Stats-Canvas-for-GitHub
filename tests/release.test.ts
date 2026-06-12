@@ -9,7 +9,11 @@ import {
   BodyTooLargeError,
   readLimitedTextBody,
 } from "../src/lib/request-body";
-import { generateSVG, type CardConfig } from "../src/lib/svg-engine";
+import {
+  generateSVG,
+  getLanguageLegend,
+  type CardConfig,
+} from "../src/lib/svg-engine";
 import { buildLinkedCardMarkdown } from "../src/lib/embed-code";
 import {
   cardConfigSchema,
@@ -134,4 +138,20 @@ test("site metric counts are formatted safely", () => {
   assert.equal(formatMetricCount(1234567), "1,234,567");
   assert.equal(formatMetricCount(-20), "0");
   assert.equal(formatMetricCount(12.9), "12");
+});
+
+test("language legend defaults to six languages and groups the rest", () => {
+  const languages = Array.from({ length: 8 }, (_, index) => ({
+    name: `Language ${index + 1}`,
+    color: "#ffffff",
+    size: 8 - index,
+  }));
+  const legend = getLanguageLegend(languages);
+  assert.equal(legend.length, 7);
+  assert.equal(legend[5].name, "Language 6");
+  assert.equal(legend[6].name, "Other");
+  assert.equal(
+    legend.reduce((sum, language) => sum + language.percent, 0),
+    100,
+  );
 });

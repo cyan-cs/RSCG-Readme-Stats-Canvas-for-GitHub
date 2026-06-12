@@ -90,6 +90,7 @@ export const cardElementSchema = z
     // Keep accepting the old 40px minimum. The editor and renderer clamp it
     // to the current 80px visual minimum so existing saved cards still load.
     languageBarWidth: z.number().finite().min(40).max(800).optional(),
+    languageCount: z.number().int().min(1).max(10).optional(),
     shapeType: z
       .enum([
         "rectangle",

@@ -76,7 +76,7 @@ async function fetchPublicGitHubStats(
 
     const sortedLanguages = Object.values(langMap)
       .sort((a, b) => b.size - a.size)
-      .slice(0, 5);
+      .slice(0, 10);
 
     return {
       totalRepos: user.public_repos || 0,
@@ -275,7 +275,7 @@ export async function fetchGitHubStats(
 
     const sortedLanguages = Object.values(langMap)
       .sort((a, b) => b.size - a.size)
-      .slice(0, 5);
+      .slice(0, 10);
 
     const calendar = user.contributionsCollection?.contributionCalendar;
     const yearCommits = calendar?.totalContributions || 0;

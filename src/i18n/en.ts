@@ -122,6 +122,9 @@ export const en = {
   "inspector.height": "HEIGHT",
   "inspector.languages.width": "LANGUAGE BAR WIDTH",
   "inspector.languages.widthHint": "Width range: 80-800px",
+  "inspector.languages.count": "LANGUAGES TO SHOW",
+  "inspector.languages.countHint":
+    "Additional languages are grouped into Other.",
   "inspector.layout": "Layout",
   "inspector.line.endPoint": "End point",
   "inspector.line.startPoint": "Start point",

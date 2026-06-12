@@ -122,6 +122,8 @@ export const zh = {
   "inspector.height": "高度",
   "inspector.languages.width": "语言栏宽度",
   "inspector.languages.widthHint": "宽度范围：80-800px",
+  "inspector.languages.count": "显示的语言数量",
+  "inspector.languages.countHint": "超出的语言将归入“其他”。",
   "inspector.layout": "布局",
   "inspector.line.endPoint": "结束点",
   "inspector.line.startPoint": "起始点",

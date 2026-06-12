@@ -124,6 +124,8 @@ export const ko = {
   "inspector.height": "높이",
   "inspector.languages.width": "언어 바 너비",
   "inspector.languages.widthHint": "너비 범위: 80-800px",
+  "inspector.languages.count": "표시할 언어 수",
+  "inspector.languages.countHint": "초과 언어는 기타로 합쳐집니다.",
   "inspector.layout": "레이아웃",
   "inspector.line.endPoint": "끝점",
   "inspector.line.startPoint": "시작점",
