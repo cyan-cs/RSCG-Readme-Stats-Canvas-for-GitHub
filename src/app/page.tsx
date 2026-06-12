@@ -499,7 +499,17 @@ export default function EditorPage() {
     "start" | "end" | null
   >(null);
   const draggingEndpointRef = useRef<"start" | "end" | null>(null);
-  const [resizing, setResizing] = useState<boolean>(false);
+  const [resizing, setResizing] = useState<"width" | "height" | "both" | null>(
+    null,
+  );
+  const resizeStartRef = useRef<{
+    clientX: number;
+    clientY: number;
+    width: number;
+    height: number;
+    scaleX: number;
+    scaleY: number;
+  } | null>(null);
   const [elementResizingId, setElementResizingId] = useState<string | null>(
     null,
   );
@@ -1388,7 +1398,35 @@ export default function EditorPage() {
         return;
       }
       if (resizing && canvasRef.current) {
-        // We no longer manually resize height via drag, but we keep the state check if needed for other things
+        const start = resizeStartRef.current;
+        if (!start) return;
+        const snapDimension = (value: number, min: number, max: number) => {
+          const clamped = Math.max(min, Math.min(max, Math.round(value)));
+          return snapTo8px
+            ? Math.max(min, Math.min(max, Math.round(clamped / 8) * 8))
+            : clamped;
+        };
+        const width =
+          resizing === "width" || resizing === "both"
+            ? snapDimension(
+                start.width + (e.clientX - start.clientX) * start.scaleX,
+                50,
+                1200,
+              )
+            : undefined;
+        const height =
+          resizing === "height" || resizing === "both"
+            ? snapDimension(
+                start.height + (e.clientY - start.clientY) * start.scaleY,
+                20,
+                800,
+              )
+            : undefined;
+        setConfig((prev) => ({
+          ...prev,
+          width: width ?? prev.width,
+          height: height ?? prev.height,
+        }));
         return;
       }
       if (elementResizingId && canvasRef.current) {
@@ -1708,7 +1746,8 @@ export default function EditorPage() {
       setDraggingId(null);
       setDraggingEndpoint(null);
       draggingEndpointRef.current = null;
-      setResizing(false);
+      setResizing(null);
+      resizeStartRef.current = null;
       setElementResizingId(null);
       setSnapLines({});
     };
@@ -1752,6 +1791,27 @@ export default function EditorPage() {
     snapTo8px,
     getCanvasPoint,
   ]);
+
+  const startCardResize = (
+    e: React.MouseEvent,
+    direction: "width" | "height" | "both",
+  ) => {
+    if (e.button !== 0 || !canvasRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = canvasRef.current.getBoundingClientRect();
+    saveToHistory();
+    resizeStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      width: config.width,
+      height: config.height,
+      scaleX: rect.width > 0 ? config.width / rect.width : 1,
+      scaleY: rect.height > 0 ? config.height / rect.height : 1,
+    };
+    setResizing(direction);
+    setSelectedIds([]);
+  };
 
   if (!mounted || status === "loading" || !isInitialized) {
     return (
@@ -4503,6 +4563,30 @@ export default function EditorPage() {
                       </div>
                     );
                   })}
+                  {widthMode === "manual" && (
+                    <button
+                      type="button"
+                      aria-label="Resize card width"
+                      onMouseDown={(e) => startCardResize(e, "width")}
+                      className="absolute right-[-7px] top-1/2 z-50 h-12 w-3 -translate-y-1/2 cursor-ew-resize rounded-full border border-white/70 bg-[#7d2ae8] shadow-[0_0_0_2px_rgba(18,18,23,0.8)] transition-colors hover:bg-[#9d5af2]"
+                    />
+                  )}
+                  {heightMode === "manual" && (
+                    <button
+                      type="button"
+                      aria-label="Resize card height"
+                      onMouseDown={(e) => startCardResize(e, "height")}
+                      className="absolute bottom-[-7px] left-1/2 z-50 h-3 w-12 -translate-x-1/2 cursor-ns-resize rounded-full border border-white/70 bg-[#7d2ae8] shadow-[0_0_0_2px_rgba(18,18,23,0.8)] transition-colors hover:bg-[#9d5af2]"
+                    />
+                  )}
+                  {widthMode === "manual" && heightMode === "manual" && (
+                    <button
+                      type="button"
+                      aria-label="Resize card"
+                      onMouseDown={(e) => startCardResize(e, "both")}
+                      className="absolute bottom-[-8px] right-[-8px] z-[51] h-4 w-4 cursor-nwse-resize rounded-sm border-2 border-white bg-[#7d2ae8] shadow-[0_0_0_2px_rgba(18,18,23,0.8)] transition-transform hover:scale-110"
+                    />
+                  )}
                 </div>
               </div>
             </div>
