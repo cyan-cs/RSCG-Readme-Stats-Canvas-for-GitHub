@@ -16,9 +16,11 @@ import {
 } from "../src/lib/svg-engine";
 import { buildLinkedCardMarkdown } from "../src/lib/embed-code";
 import {
-  cardConfigSchema,
-  cardElementSchema,
-} from "../src/lib/validation";
+  calculatePreviewFitZoom,
+  clampPreviewZoom,
+  configFingerprint,
+} from "../src/lib/editor-ui";
+import { cardConfigSchema, cardElementSchema } from "../src/lib/validation";
 import { formatMetricCount } from "../src/lib/site-metrics";
 
 const validConfig: CardConfig = {
@@ -165,6 +167,22 @@ test("site metric counts are formatted safely", () => {
   assert.equal(formatMetricCount(1234567), "1,234,567");
   assert.equal(formatMetricCount(-20), "0");
   assert.equal(formatMetricCount(12.9), "12");
+});
+
+test("editor zoom helpers clamp and fit predictably", () => {
+  assert.equal(clampPreviewZoom(0.01), 0.25);
+  assert.equal(clampPreviewZoom(3), 2);
+  assert.equal(clampPreviewZoom(1.26), 1.3);
+  assert.equal(calculatePreviewFitZoom(900, 650, 850, 550), 1);
+  assert.equal(calculatePreviewFitZoom(320, 240, 1200, 800), 0.25);
+});
+
+test("config fingerprints change with publishable card changes", () => {
+  assert.equal(configFingerprint(validConfig), configFingerprint(validConfig));
+  assert.notEqual(
+    configFingerprint(validConfig),
+    configFingerprint({ ...validConfig, width: validConfig.width + 8 }),
+  );
 });
 
 test("language legend defaults to six languages and groups the rest", () => {

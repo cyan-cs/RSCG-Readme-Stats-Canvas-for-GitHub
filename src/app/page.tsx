@@ -19,6 +19,12 @@ import type { GitHubStats } from "@/lib/github-api";
 import { cardConfigSchema, cardElementSchema } from "@/lib/validation";
 import { buildLinkedCardMarkdown } from "@/lib/embed-code";
 import {
+  calculatePreviewFitZoom,
+  clampPreviewZoom,
+  configFingerprint,
+  PREVIEW_ZOOM_STEP,
+} from "@/lib/editor-ui";
+import {
   translate,
   type TranslationKey,
   resolveLocale,
@@ -56,6 +62,11 @@ import {
   MoreHorizontal,
   Link2,
   Wallpaper,
+  Minus,
+  Maximize2,
+  RotateCcw,
+  Save,
+  AlertCircle,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -75,6 +86,7 @@ type DrawerType =
   | "widgets";
 type DecorationTab = "line" | "shape";
 type SizeMode = "auto" | "manual";
+type AutoSaveStatus = "saving" | "saved" | "error";
 type ShapeDrawingState = {
   startX: number;
   startY: number;
@@ -495,6 +507,12 @@ export default function EditorPage() {
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showPublishOptions, setShowPublishOptions] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] =
+    useState<AutoSaveStatus>("saved");
+  const [lastPublishedFingerprint, setLastPublishedFingerprint] = useState<
+    string | null
+  >(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<
     { id: number; text: string; type: "error" | "success" }[]
@@ -543,6 +561,7 @@ export default function EditorPage() {
   } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const previewViewportRef = useRef<HTMLElement>(null);
+  const autoSaveTimerRef = useRef<number | null>(null);
   const clipboardRef = useRef<CardElement[]>([]);
   const hasLoadedInitial = useRef(false);
   const shiftRef = useRef(false);
@@ -565,7 +584,22 @@ export default function EditorPage() {
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [snapTo8px, setSnapTo8px] = useState(true);
-  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewZoom, setPreviewZoom] = useState(() => {
+    try {
+      return clampPreviewZoom(
+        Number(localStorage.getItem("rscg-preview-zoom")) || 1,
+      );
+    } catch {
+      return 1;
+    }
+  });
+  const [showZoomHint, setShowZoomHint] = useState(() => {
+    try {
+      return localStorage.getItem("rscg-zoom-hint-seen") !== "true";
+    } catch {
+      return true;
+    }
+  });
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const [widthMode, setWidthMode] = useState<SizeMode>(() => {
     try {
@@ -673,6 +707,37 @@ export default function EditorPage() {
   );
   const shareMessage =
     customShareMessage ?? translate(locale, "share.defaultMessage");
+  const currentConfigFingerprint = React.useMemo(
+    () => configFingerprint(config),
+    [config],
+  );
+  const hasUnpublishedChanges =
+    lastPublishedFingerprint !== null &&
+    lastPublishedFingerprint !== currentConfigFingerprint;
+
+  const dismissZoomHint = React.useCallback(() => {
+    setShowZoomHint(false);
+    try {
+      localStorage.setItem("rscg-zoom-hint-seen", "true");
+    } catch {}
+  }, []);
+
+  const changePreviewZoom = React.useCallback((nextZoom: number) => {
+    setPreviewZoom(clampPreviewZoom(nextZoom));
+  }, []);
+
+  const fitPreviewToViewport = React.useCallback(() => {
+    const viewport = previewViewportRef.current;
+    if (!viewport) return;
+    changePreviewZoom(
+      calculatePreviewFitZoom(
+        viewport.clientWidth,
+        viewport.clientHeight - 56,
+        Math.max(850, config.width + 296),
+        Math.max(550, config.height + 184),
+      ),
+    );
+  }, [changePreviewZoom, config.height, config.width]);
 
   const toggleDrawer = (drawer: DrawerType) => {
     const nextDrawer = activeDrawer === drawer ? null : drawer;
@@ -708,16 +773,20 @@ export default function EditorPage() {
       event.preventDefault();
       const direction = event.deltaY < 0 ? 1 : -1;
       setPreviewZoom((current) =>
-        Math.max(
-          0.25,
-          Math.min(2, Math.round((current + direction * 0.1) * 10) / 10),
-        ),
+        clampPreviewZoom(current + direction * PREVIEW_ZOOM_STEP),
       );
+      dismissZoomHint();
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, []);
+  }, [dismissZoomHint]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("rscg-preview-zoom", String(previewZoom));
+    } catch {}
+  }, [previewZoom]);
 
   const previewSvg = React.useMemo(
     () => generateSVG(config, displayStats, locale),
@@ -1010,7 +1079,12 @@ export default function EditorPage() {
           .then(async (res) => {
             if (res.ok) {
               const lastConfig = cardConfigSchema.safeParse(await res.json());
-              if (lastConfig.success) setConfig(lastConfig.data);
+              if (lastConfig.success) {
+                setConfig(lastConfig.data);
+                setLastPublishedFingerprint(
+                  configFingerprint(lastConfig.data),
+                );
+              }
             }
           })
           .catch(() => {}),
@@ -1289,8 +1363,10 @@ export default function EditorPage() {
         e.preventDefault();
         try {
           localStorage.setItem("rscg-config", JSON.stringify(config));
+          setAutoSaveStatus("saved");
           showToast(t("status.saved"), "success");
         } catch {
+          setAutoSaveStatus("error");
           showToast(t("errors.saveTemplate"));
         }
       }
@@ -1299,6 +1375,7 @@ export default function EditorPage() {
         setShowShareModal(false);
         setShowPublishModal(false);
         setShowPublishOptions(false);
+        setShowMoreMenu(false);
         setShowSizeMenu(false);
         setShowLangMenu(false);
         setShowSaveModal(false);
@@ -1324,12 +1401,29 @@ export default function EditorPage() {
     t,
   ]);
 
-  // Auto-save config to localStorage on every change
+  // Debounced local auto-save with visible status.
   useEffect(() => {
     if (!isInitialized) return;
-    try {
-      localStorage.setItem("rscg-config", JSON.stringify(config));
-    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAutoSaveStatus("saving");
+    if (autoSaveTimerRef.current !== null) {
+      window.clearTimeout(autoSaveTimerRef.current);
+    }
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      try {
+        localStorage.setItem("rscg-config", JSON.stringify(config));
+        setAutoSaveStatus("saved");
+      } catch {
+        setAutoSaveStatus("error");
+      }
+      autoSaveTimerRef.current = null;
+    }, 300);
+    return () => {
+      if (autoSaveTimerRef.current !== null) {
+        window.clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
   }, [config, isInitialized]);
 
   useEffect(() => {
@@ -1890,6 +1984,22 @@ export default function EditorPage() {
   const firstSelectedElement = config.elements.find(
     (el) => el.id === selectedIds[0],
   );
+  const firstSelectedExtent = firstSelectedElement
+    ? getElementExtent(firstSelectedElement)
+    : null;
+  const firstSelectedSize =
+    firstSelectedElement && firstSelectedExtent
+      ? {
+          width: Math.max(
+            0,
+            Math.round(firstSelectedExtent.right - firstSelectedElement.x),
+          ),
+          height: Math.max(
+            0,
+            Math.round(firstSelectedExtent.bottom - firstSelectedElement.y),
+          ),
+        }
+      : null;
 
   const updateSelected = (updates: Partial<CardElement>) => {
     if (selectedIds.length === 0) return;
@@ -2140,6 +2250,48 @@ export default function EditorPage() {
     }
   };
 
+  const handlePublish = async () => {
+    const publishedFingerprint = currentConfigFingerprint;
+    setIsPublishing(true);
+    try {
+      const res = await fetch("/api/publish", {
+        method: "POST",
+        body: JSON.stringify(config),
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const url = `${window.location.origin}/${config.username}`;
+        setPublishedUrl(url);
+        setLastPublishedFingerprint(publishedFingerprint);
+        setCopied(false);
+        setCopiedImg(false);
+        setCopiedUrl(false);
+        setShowPublishOptions(false);
+        setShowPublishModal(true);
+        showToast(t("status.published"), "success");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || t("errors.publish"));
+      }
+    } catch {
+      showToast(t("errors.publishNetwork"));
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const requestResetCard = () => {
+    setConfirmModal({
+      message: t("confirm.resetCard"),
+      onConfirm: () => {
+        setConfig({ ...defaultConfig, username: config.username });
+        setHistory([]);
+        setRedoStack([]);
+        setSelectedIds([]);
+      },
+    });
+  };
+
   const SHARE_PLATFORMS: {
     id: string;
     name: string;
@@ -2163,6 +2315,8 @@ export default function EditorPage() {
         setEditingId(null);
         setPlacingType(null);
         setShowShortcuts(false);
+        setShowMoreMenu(false);
+        setShowLangMenu(false);
       }}
     >
       {/* Toast notifications */}
@@ -2222,6 +2376,31 @@ export default function EditorPage() {
         </div>
       )}
 
+      {(placingType || lineDrawing || shapeDrawing) && (
+        <div className="fixed left-1/2 top-16 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-[#55436d] bg-[#17161c]/95 px-4 py-2 text-xs shadow-2xl backdrop-blur">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[#9d5af2]" />
+          <span className="font-semibold text-zinc-200">
+            {t("editor.placement.active")}:{" "}
+            {t(
+              ELEMENT_NAME_KEYS[
+                placingType ||
+                  (lineDrawing ? "line" : shapeDrawing ? "shape" : "text")
+              ],
+            )}
+          </span>
+          <button
+            onClick={() => {
+              setPlacingType(null);
+              setLineDrawing(null);
+              setShapeDrawing(null);
+            }}
+            className="rounded-full border border-[#35313d] px-2 py-0.5 text-[10px] font-bold text-zinc-500 transition-colors hover:border-[#7d2ae8] hover:text-white"
+          >
+            Esc {t("actions.cancel")}
+          </button>
+        </div>
+      )}
+
       {/* TOP TOOLBAR - DARK UI */}
       <header
         className="fixed top-0 left-0 right-0 h-14 bg-[#121217] border-b border-[#2a2a32] z-30 flex items-center px-6 justify-between shadow-lg"
@@ -2239,75 +2418,62 @@ export default function EditorPage() {
               maxLength={32}
             />
           </div>
+          <div
+            className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold ${
+              autoSaveStatus === "error"
+                ? "bg-red-500/10 text-red-300"
+                : "bg-[#1e1e24] text-zinc-500"
+            }`}
+            title={t(
+              autoSaveStatus === "saving"
+                ? "status.autoSaving"
+                : autoSaveStatus === "error"
+                  ? "status.autoSaveFailed"
+                  : "status.autoSaved",
+            )}
+          >
+            {autoSaveStatus === "saving" ? (
+              <span className="h-2.5 w-2.5 animate-spin rounded-full border border-zinc-600 border-t-[#9d5af2]" />
+            ) : autoSaveStatus === "error" ? (
+              <AlertCircle size={12} />
+            ) : (
+              <Save size={12} />
+            )}
+            <span className="hidden xl:inline">
+              {t(
+                autoSaveStatus === "saving"
+                  ? "status.autoSaving"
+                  : autoSaveStatus === "error"
+                    ? "status.autoSaveFailed"
+                    : "status.autoSaved",
+              )}
+            </span>
+          </div>
+          {hasUnpublishedChanges && (
+            <span className="hidden rounded-full bg-amber-500/10 px-2 py-1 text-[10px] font-semibold text-amber-300 xl:inline">
+              {t("status.unpublishedChanges")}
+            </span>
+          )}
           <div className="h-4 w-[1px] bg-[#2a2a32] mx-1" />
           <button
             onClick={undo}
             disabled={history.length === 0}
-            className="p-1.5 hover:bg-[#2a2a32] rounded transition-colors disabled:opacity-20"
+            className="editor-tooltip flex h-8 w-8 items-center justify-center rounded transition-colors hover:bg-[#2a2a32] disabled:opacity-20"
             title={t("actions.undo")}
+            data-tooltip={t("actions.undo")}
+            aria-label={t("actions.undo")}
           >
             <Undo2 size={16} />
           </button>
           <button
             onClick={redo}
             disabled={redoStack.length === 0}
-            className="p-1.5 hover:bg-[#2a2a32] rounded transition-colors disabled:opacity-20"
+            className="editor-tooltip flex h-8 w-8 items-center justify-center rounded transition-colors hover:bg-[#2a2a32] disabled:opacity-20"
             title={t("actions.redo")}
+            data-tooltip={t("actions.redo")}
+            aria-label={t("actions.redo")}
           >
             <Redo2 size={16} />
-          </button>
-          <div className="h-4 w-[1px] bg-[#2a2a32] mx-1" />
-          <button
-            onClick={() => {
-              setConfirmModal({
-                message: t("confirm.resetCard"),
-                onConfirm: () => {
-                  setConfig({
-                    username: config.username,
-                    bgColor: "#0d1117",
-                    borderColor: "#30363d",
-                    width: 380,
-                    height: 158,
-                    elements: [
-                      {
-                        id: "1",
-                        type: "text",
-                        x: 16,
-                        y: 30,
-                        text: "My GitHub Stats",
-                        fontSize: 18,
-                        visible: true,
-                        color: "#58a6ff",
-                      },
-                      {
-                        id: "2",
-                        type: "stats",
-                        x: 16,
-                        y: 52,
-                        fontSize: 14,
-                        visible: true,
-                        color: "#ffffff",
-                      },
-                      {
-                        id: "3",
-                        type: "languages",
-                        x: 16,
-                        y: 112,
-                        visible: true,
-                        color: "#ffffff",
-                      },
-                    ],
-                  });
-                  setHistory([]);
-                  setRedoStack([]);
-                  setSelectedIds([]);
-                },
-              });
-            }}
-            className="p-1.5 hover:bg-[#2a2a32] rounded transition-colors text-zinc-500 hover:text-red-400"
-            title={t("actions.reset")}
-          >
-            <Trash2 size={14} />
           </button>
         </div>
 
@@ -2569,49 +2735,59 @@ export default function EditorPage() {
             </button>
             <div className="h-4 w-[1px] bg-[#2a2a32] mx-1" />
             <button
-              onClick={importConfig}
-              className="p-1 hover:bg-[#2a2a32] rounded transition-colors text-zinc-500 hover:text-white"
-              title={t("actions.importJson")}
-            >
-              <Download size={14} />
-            </button>
-            <button
               onClick={handleShare}
-              className="p-1 hover:bg-[#2a2a32] rounded transition-colors text-zinc-500 hover:text-white"
+              className="editor-tooltip flex h-8 w-8 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-[#2a2a32] hover:text-white"
               title={t("actions.share")}
+              data-tooltip={t("actions.share")}
+              aria-label={t("actions.share")}
             >
               <Share2 size={14} />
             </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowMoreMenu((current) => !current)}
+                className="editor-tooltip flex h-8 w-8 items-center justify-center rounded text-zinc-500 transition-colors hover:bg-[#2a2a32] hover:text-white"
+                title={t("actions.moreOptions")}
+                data-tooltip={t("actions.moreOptions")}
+                aria-label={t("actions.moreOptions")}
+                aria-expanded={showMoreMenu}
+              >
+                <MoreHorizontal size={16} />
+              </button>
+              {showMoreMenu && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-lg border border-[#35313d] bg-[#17161c] p-1.5 shadow-2xl">
+                  <button
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      importConfig();
+                    }}
+                    className="flex h-9 w-full items-center gap-2 rounded px-3 text-left text-xs font-semibold text-zinc-400 transition-colors hover:bg-[#292630] hover:text-white"
+                  >
+                    <Download size={14} />
+                    {t("actions.importJson")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      requestResetCard();
+                    }}
+                    className="flex h-9 w-full items-center gap-2 rounded px-3 text-left text-xs font-semibold text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                  >
+                    <Trash2 size={14} />
+                    {t("actions.reset")}
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="h-6 w-[1px] bg-[#2a2a32] mx-1" />
             <button
-              onClick={async () => {
-                setIsPublishing(true);
-                try {
-                  const res = await fetch("/api/publish", {
-                    method: "POST",
-                    body: JSON.stringify(config),
-                    headers: { "Content-Type": "application/json" },
-                  });
-                  if (res.ok) {
-                    const url = `${window.location.origin}/${config.username}`;
-                    setPublishedUrl(url);
-                    setCopied(false);
-                    setCopiedImg(false);
-                    setCopiedUrl(false);
-                    setShowPublishOptions(false);
-                    setShowPublishModal(true);
-                    showToast(t("status.published"), "success");
-                  } else {
-                    const err = await res.json().catch(() => ({}));
-                    showToast(err.error || t("errors.publish"));
-                  }
-                } catch {
-                  showToast(t("errors.publishNetwork"));
-                }
-                setIsPublishing(false);
-              }}
+              onClick={handlePublish}
               disabled={isPublishing}
-              className="bg-[#7d2ae8] text-white px-5 py-1.5 rounded-md text-xs font-bold hover:bg-[#6a22c5] shadow-lg flex items-center gap-2 transition-all"
+              className={`flex h-9 items-center gap-2 rounded-md px-5 text-xs font-bold text-white shadow-lg transition-all ${
+                hasUnpublishedChanges
+                  ? "bg-amber-600 hover:bg-amber-500"
+                  : "bg-[#7d2ae8] hover:bg-[#6a22c5]"
+              } disabled:cursor-wait disabled:opacity-60`}
             >
               <Rocket size={14} />
               {isPublishing ? "..." : t("actions.publish")}
@@ -4817,6 +4993,88 @@ export default function EditorPage() {
         </div>
       </main>
 
+      <div
+        className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-[#35313d] bg-[#15141a]/95 p-1.5 text-zinc-400 shadow-2xl backdrop-blur"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() =>
+            changePreviewZoom(previewZoom - PREVIEW_ZOOM_STEP)
+          }
+          className="editor-tooltip flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#292630] hover:text-white"
+          data-tooltip={t("editor.zoom.out")}
+          aria-label={t("editor.zoom.out")}
+        >
+          <Minus size={14} />
+        </button>
+        <button
+          onClick={() => changePreviewZoom(1)}
+          className="h-8 min-w-14 rounded-md px-2 text-[11px] font-bold tabular-nums transition-colors hover:bg-[#292630] hover:text-white"
+          title={t("editor.zoom.reset")}
+        >
+          {Math.round(previewZoom * 100)}%
+        </button>
+        <button
+          onClick={() =>
+            changePreviewZoom(previewZoom + PREVIEW_ZOOM_STEP)
+          }
+          className="editor-tooltip flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#292630] hover:text-white"
+          data-tooltip={t("editor.zoom.in")}
+          aria-label={t("editor.zoom.in")}
+        >
+          <Plus size={14} />
+        </button>
+        <button
+          onClick={fitPreviewToViewport}
+          className="editor-tooltip flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#292630] hover:text-white"
+          data-tooltip={t("editor.zoom.fit")}
+          aria-label={t("editor.zoom.fit")}
+        >
+          <Maximize2 size={14} />
+        </button>
+        <button
+          onClick={() => changePreviewZoom(1)}
+          className="editor-tooltip flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[#292630] hover:text-white"
+          data-tooltip={t("editor.zoom.reset")}
+          aria-label={t("editor.zoom.reset")}
+        >
+          <RotateCcw size={14} />
+        </button>
+        <div className="mx-1 h-5 w-px bg-[#35313d]" />
+        <span className="px-2 text-[10px] font-semibold tabular-nums text-zinc-500">
+          {config.width} × {config.height}
+        </span>
+        <span className="rounded-md bg-[#211e29] px-2 py-1 text-[10px] font-semibold text-zinc-400">
+          {selectedIds.length > 0
+            ? `${selectedIds.length} ${t("editor.selection.items")}`
+            : t("editor.selection.none")}
+        </span>
+        <span
+          className={`rounded-md px-2 py-1 text-[10px] font-semibold ${
+            snapTo8px
+              ? "bg-[#7d2ae8]/15 text-[#b985ff]"
+              : "bg-[#211e29] text-zinc-600"
+          }`}
+        >
+          {t("editor.snap8px")}
+        </span>
+        {showZoomHint && (
+          <>
+            <div className="mx-1 h-5 w-px bg-[#35313d]" />
+            <span className="pl-2 text-[10px] text-zinc-500">
+              {t("editor.zoom.hint")}
+            </span>
+            <button
+              onClick={dismissZoomHint}
+              className="flex h-7 w-7 items-center justify-center rounded text-zinc-600 hover:bg-[#292630] hover:text-white"
+              aria-label={t("actions.close")}
+            >
+              <X size={12} />
+            </button>
+          </>
+        )}
+      </div>
+
       {/* Mobile right panel backdrop */}
       {showRightPanel && (
         <div
@@ -4889,10 +5147,33 @@ export default function EditorPage() {
                   </button>
                 </div>
               </div>
-              <details
-                open
-                className="rounded border border-[#2a2a32] bg-[#17171d]"
-              >
+              <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-zinc-500">
+                {selectedIds.length === 1 ? (
+                  <>
+                    <span className="rounded bg-[#1e1e24] px-2 py-1">
+                      X {Math.round(firstSelectedElement.x)}
+                    </span>
+                    <span className="rounded bg-[#1e1e24] px-2 py-1">
+                      Y {Math.round(firstSelectedElement.y)}
+                    </span>
+                    {firstSelectedSize && (
+                      <span className="rounded bg-[#1e1e24] px-2 py-1">
+                        {firstSelectedSize.width} × {firstSelectedSize.height}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="rounded bg-[#1e1e24] px-2 py-1">
+                    {t("editor.selection.commonActions")}
+                  </span>
+                )}
+              </div>
+              {selectedIds.length === 1 && (
+                <>
+                  <details
+                    open
+                    className="rounded border border-[#2a2a32] bg-[#17171d]"
+                  >
                 <summary className="cursor-pointer px-3 py-2 text-[9px] font-bold uppercase tracking-widest text-zinc-400">
                   {t("inspector.position")}
                 </summary>
@@ -4932,12 +5213,12 @@ export default function EditorPage() {
                     />
                   </div>
                 </div>
-              </details>
+                  </details>
 
-              <details
-                open
-                className="rounded border border-[#2a2a32] bg-[#17171d]"
-              >
+                  <details
+                    open
+                    className="rounded border border-[#2a2a32] bg-[#17171d]"
+                  >
                 <summary className="cursor-pointer px-3 py-2 text-[9px] font-bold uppercase tracking-widest text-zinc-400">
                   {t("inspector.content")} / {t("inspector.appearance")}
                 </summary>
@@ -5488,14 +5769,31 @@ export default function EditorPage() {
                     </div>
                   )}
                 </div>
-              </details>
+                  </details>
+                </>
+              )}
             </section>
           ) : (
-            <div className="mt-20 flex flex-col items-center justify-center text-zinc-600 gap-4 text-center">
-              <MousePointer2 size={24} className="opacity-20" />
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">
-                {t("editor.ready")}
-              </p>
+            <div className="mt-16 flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[#2f2d36] bg-[#17171d]/70 px-5 py-8 text-center text-zinc-500">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7d2ae8]/10 text-[#9d5af2]">
+                <MousePointer2 size={19} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-zinc-300">
+                  {t("editor.selection.emptyTitle")}
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-zinc-600">
+                  {t("editor.selection.emptyHint")}
+                </p>
+              </div>
+              <div className="grid w-full grid-cols-2 gap-2 text-[10px]">
+                <span className="rounded-md bg-[#1e1e24] px-2 py-1.5">
+                  Shift + Click
+                </span>
+                <span className="rounded-md bg-[#1e1e24] px-2 py-1.5">
+                  {t("editor.hint.arrowKeys")}
+                </span>
+              </div>
             </div>
           )}
 

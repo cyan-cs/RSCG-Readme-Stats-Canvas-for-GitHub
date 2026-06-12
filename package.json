@@ -13,6 +13,7 @@
     "build": "npm run generate-previews && next build",
     "start": "next start",
     "test": "node --import tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --incremental false",
     "generate-previews": "npx tsx scripts/generate-template-previews.ts && npx tsx scripts/generate-line-previews.ts"
@@ -28,6 +29,7 @@
     "zod": "^3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
