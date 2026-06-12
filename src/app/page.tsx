@@ -4,6 +4,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import {
   CardElement,
   CardConfig,
+  BackgroundPattern,
   ElementType,
   ShapeType,
   DEFAULT_LANGUAGE_COUNT,
@@ -54,6 +55,7 @@ import {
   Square,
   MoreHorizontal,
   Link2,
+  Wallpaper,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -66,6 +68,7 @@ interface SavedCard {
 type DrawerType =
   | "templates"
   | "saved"
+  | "background"
   | "text"
   | "decoration"
   | "data"
@@ -253,6 +256,22 @@ const ELEMENT_NAME_KEYS: Record<ElementType, TranslationKey> = {
   calendar: "element.calendar.name",
   rating: "element.rating.name",
 };
+
+const BACKGROUND_PATTERNS: Array<{
+  pattern: BackgroundPattern;
+  labelKey: TranslationKey;
+}> = [
+  { pattern: "none", labelKey: "background.none" },
+  { pattern: "grid", labelKey: "background.grid" },
+  { pattern: "fine-grid", labelKey: "background.fineGrid" },
+  { pattern: "ruled", labelKey: "background.ruled" },
+  { pattern: "dots", labelKey: "background.dots" },
+  { pattern: "cross", labelKey: "background.cross" },
+  { pattern: "diagonal", labelKey: "background.diagonal" },
+  { pattern: "waves", labelKey: "background.waves" },
+  { pattern: "stars", labelKey: "background.stars" },
+  { pattern: "nebula", labelKey: "background.nebula" },
+];
 
 const LINE_COLOR_NAMES: Record<string, string> = {
   "#ffffff": "white",
@@ -576,6 +595,7 @@ export default function EditorPage() {
   const [decorationTab, setDecorationTab] = useState<DecorationTab>("line");
   const showTemplates = activeDrawer === "templates";
   const showSavedDrawer = activeDrawer === "saved";
+  const showBackgroundDrawer = activeDrawer === "background";
   const showTextDrawer = activeDrawer === "text";
   const showLineDrawer = activeDrawer === "decoration";
   const showDataDrawer = activeDrawer === "data";
@@ -702,6 +722,28 @@ export default function EditorPage() {
   const previewSvg = React.useMemo(
     () => generateSVG(config, displayStats, locale),
     [config, displayStats, locale],
+  );
+  const backgroundPreviews = React.useMemo(
+    () =>
+      Object.fromEntries(
+        BACKGROUND_PATTERNS.map(({ pattern }) => [
+          pattern,
+          generateSVG(
+            {
+              username: "",
+              bgColor: config.bgColor,
+              borderColor: config.borderColor,
+              backgroundPattern: pattern,
+              width: 180,
+              height: 90,
+              elements: [],
+            },
+            null,
+            locale,
+          ),
+        ]),
+      ) as Record<BackgroundPattern, string>,
+    [config.bgColor, config.borderColor, locale],
   );
 
   const elementPreviewSvgs = React.useMemo(() => {
@@ -2673,6 +2715,15 @@ export default function EditorPage() {
             {t("editor.sidebar.core")}
           </span>
           <button
+            onClick={() => toggleDrawer("background")}
+            className={`flex flex-col items-center gap-0.5 transition-all py-1 w-full ${showBackgroundDrawer ? "opacity-100 text-[#7d2ae8]" : "opacity-50 hover:opacity-100"}`}
+          >
+            <Wallpaper size={15} />
+            <span className="text-[7px] font-bold">
+              {t("editor.sidebar.background")}
+            </span>
+          </button>
+          <button
             onClick={() => toggleDrawer("text")}
             draggable
             onDragStart={(e) =>
@@ -2961,6 +3012,151 @@ export default function EditorPage() {
             </div>
           </div>
         </aside>
+      )}
+
+      {/* Background drawer */}
+      {showBackgroundDrawer && (
+        <>
+          <div
+            className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            onClick={() => setActiveDrawer(null)}
+          />
+          <aside
+            className="fixed bottom-0 left-0 top-14 z-20 flex w-[280px] flex-col overflow-y-auto border-l border-[#2a2a32] bg-[#121217] pt-4 md:relative md:flex md:pt-14"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 pt-4">
+              <div>
+                <p className="text-[8px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+                  {t("editor.backgroundPatterns.title")}
+                </p>
+                <p className="mt-1 text-[8px] leading-relaxed text-zinc-600">
+                  {t("editor.backgroundPatterns.hint")}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveDrawer(null)}
+                className="rounded p-1 text-zinc-500 transition-colors hover:bg-[#2a2a32] hover:text-white"
+                aria-label={t("actions.close")}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="space-y-5 p-4">
+              <section>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500">
+                    {t("editor.background")}
+                  </p>
+                  <label className="relative h-6 w-6 cursor-pointer overflow-hidden rounded-full border border-dashed border-zinc-500">
+                    <span
+                      className="absolute inset-0"
+                      style={{ backgroundColor: config.bgColor }}
+                    />
+                    <input
+                      type="color"
+                      value={config.bgColor}
+                      onMouseDown={saveToHistory}
+                      onChange={(e) =>
+                        setConfig((current) => ({
+                          ...current,
+                          bgColor: e.target.value,
+                        }))
+                      }
+                      className="absolute -inset-2 h-10 w-10 cursor-pointer opacity-0"
+                      aria-label={t("editor.background")}
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "#ffffff",
+                    "#f5f5f5",
+                    "#e8e8e8",
+                    "#0d1117",
+                    "#161b22",
+                    "#1a1a2e",
+                    "#0f172a",
+                    "#172033",
+                    "#20152f",
+                    "#10251d",
+                  ].map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => {
+                        saveToHistory();
+                        setConfig((current) => ({
+                          ...current,
+                          bgColor: color,
+                        }));
+                      }}
+                      className={`h-6 w-6 rounded-full border transition-transform hover:scale-110 ${
+                        config.bgColor === color
+                          ? "border-[#b985ff] ring-2 ring-[#7d2ae8]/50"
+                          : "border-[#3a3a42]"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      aria-label={color}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <p className="mb-2 text-[8px] font-bold uppercase tracking-widest text-zinc-500">
+                  {t("editor.backgroundPatterns.pattern")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {BACKGROUND_PATTERNS.map(({ pattern, labelKey }) => {
+                    const selected =
+                      (config.backgroundPattern || "none") === pattern;
+                    return (
+                      <button
+                        key={pattern}
+                        type="button"
+                        onClick={() => {
+                          saveToHistory();
+                          setConfig((current) => ({
+                            ...current,
+                            backgroundPattern: pattern,
+                          }));
+                        }}
+                        className={`group overflow-hidden rounded-lg border bg-[#18181e] text-left transition-colors ${
+                          selected
+                            ? "border-[#9d5af2] ring-1 ring-[#7d2ae8]/60"
+                            : "border-[#2a2a32] hover:border-[#5c427e]"
+                        }`}
+                      >
+                        <div
+                          className="aspect-[2/1] w-full overflow-hidden [&>svg]:h-full [&>svg]:w-full"
+                          dangerouslySetInnerHTML={{
+                            __html: backgroundPreviews[pattern],
+                          }}
+                        />
+                        <div className="flex items-center justify-between px-2 py-1.5">
+                          <span
+                            className={`text-[8px] font-bold ${
+                              selected
+                                ? "text-[#b985ff]"
+                                : "text-zinc-500 group-hover:text-zinc-300"
+                            }`}
+                          >
+                            {t(labelKey)}
+                          </span>
+                          {selected && (
+                            <Check size={11} className="text-[#9d5af2]" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+          </aside>
+        </>
       )}
 
       {/* Text drawer */}

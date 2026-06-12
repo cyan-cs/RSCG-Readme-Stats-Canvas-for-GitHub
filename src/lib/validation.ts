@@ -133,6 +133,20 @@ export const cardConfigSchema = z
     username: z.string().max(100),
     bgColor: svgColorSchema,
     borderColor: svgColorSchema,
+    backgroundPattern: z
+      .enum([
+        "none",
+        "grid",
+        "fine-grid",
+        "ruled",
+        "dots",
+        "cross",
+        "diagonal",
+        "waves",
+        "stars",
+        "nebula",
+      ])
+      .optional(),
     width: z.number().finite().min(50).max(1200),
     height: z.number().finite().min(20).max(800),
     elements: z.array(cardElementSchema).max(100),

@@ -88,6 +88,33 @@ test("SVG output escapes user-provided text", () => {
   assert.match(svg, /&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/);
 });
 
+test("background patterns validate and render into the SVG", () => {
+  const patternedConfig: CardConfig = {
+    ...validConfig,
+    backgroundPattern: "grid",
+  };
+  assert.equal(cardConfigSchema.safeParse(patternedConfig).success, true);
+  assert.equal(
+    cardConfigSchema.safeParse({
+      ...validConfig,
+      backgroundPattern: "unsafe-pattern",
+    }).success,
+    false,
+  );
+
+  const svg = generateSVG(patternedConfig, null);
+  assert.match(svg, /<pattern id="card-background-/);
+  assert.match(svg, /clip-path="url\(#card-background-clip-/);
+
+  const starsSvg = generateSVG(
+    { ...validConfig, backgroundPattern: "stars" },
+    null,
+  );
+  assert.match(starsSvg, /width="137" height="101"/);
+  assert.match(starsSvg, /width="181" height="149"/);
+  assert.match(starsSvg, /width="223" height="173"/);
+});
+
 test("locale resolution and dictionaries stay consistent", () => {
   assert.equal(resolveLocale("ja-JP"), "ja");
   assert.equal(resolveLocale("ko-KR"), "ko");

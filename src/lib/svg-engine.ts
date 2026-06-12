@@ -28,6 +28,18 @@ export type ShapeType =
   | "hexagon"
   | "speech-bubble";
 
+export type BackgroundPattern =
+  | "none"
+  | "grid"
+  | "fine-grid"
+  | "ruled"
+  | "dots"
+  | "cross"
+  | "diagonal"
+  | "waves"
+  | "stars"
+  | "nebula";
+
 export const LANGUAGE_MIN_WIDTH = 80;
 export const LANGUAGE_MAX_WIDTH = 800;
 export const DEFAULT_LANGUAGE_COUNT = 6;
@@ -89,6 +101,7 @@ export interface CardConfig {
   username: string;
   bgColor: string;
   borderColor: string;
+  backgroundPattern?: BackgroundPattern;
   width: number;
   height: number;
   elements: CardElement[];
@@ -306,6 +319,84 @@ function starPoints(
   );
 }
 
+function renderBackgroundPattern(
+  pattern: BackgroundPattern,
+  cardW: number,
+  cardH: number,
+  defsParts: string[],
+): string {
+  if (pattern === "none") return "";
+
+  const id = safeSvgId("card-background", pattern);
+  const muted = "#8b949e";
+  const light = "#ffffff";
+
+  if (pattern === "nebula") {
+    defsParts.push(
+      `<radialGradient id="${id}-a" cx="25%" cy="25%" r="65%"><stop offset="0%" stop-color="#7d2ae8" stop-opacity="0.42"/><stop offset="100%" stop-color="#7d2ae8" stop-opacity="0"/></radialGradient>`,
+      `<radialGradient id="${id}-b" cx="80%" cy="70%" r="70%"><stop offset="0%" stop-color="#1f6feb" stop-opacity="0.34"/><stop offset="100%" stop-color="#1f6feb" stop-opacity="0"/></radialGradient>`,
+      `<pattern id="${id}-stars-a" width="137" height="101" patternUnits="userSpaceOnUse"><circle cx="9" cy="12" r="1" fill="${light}" opacity="0.7"/><circle cx="51" cy="7" r="0.6" fill="${light}" opacity="0.5"/><circle cx="94" cy="34" r="1.2" fill="${light}" opacity="0.8"/><circle cx="128" cy="79" r="0.7" fill="${light}" opacity="0.55"/><circle cx="31" cy="88" r="0.8" fill="${light}" opacity="0.65"/></pattern>`,
+      `<pattern id="${id}-stars-b" width="181" height="149" patternUnits="userSpaceOnUse" patternTransform="translate(23 17)"><circle cx="18" cy="63" r="0.5" fill="${light}" opacity="0.4"/><circle cx="76" cy="21" r="0.8" fill="${light}" opacity="0.55"/><circle cx="143" cy="92" r="0.6" fill="${light}" opacity="0.48"/><path d="M164 31V37M161 34H167" stroke="${light}" stroke-width="0.8" opacity="0.55"/></pattern>`,
+    );
+    return `<rect width="${cardW}" height="${cardH}" fill="url(#${id}-a)"/><rect width="${cardW}" height="${cardH}" fill="url(#${id}-b)"/><rect width="${cardW}" height="${cardH}" fill="url(#${id}-stars-a)"/><rect width="${cardW}" height="${cardH}" fill="url(#${id}-stars-b)"/>`;
+  }
+
+  if (pattern === "stars") {
+    defsParts.push(
+      `<pattern id="${id}-a" width="137" height="101" patternUnits="userSpaceOnUse"><circle cx="7" cy="11" r="1.1" fill="${light}" opacity="0.72"/><circle cx="43" cy="31" r="0.6" fill="${light}" opacity="0.48"/><circle cx="102" cy="9" r="0.9" fill="${light}" opacity="0.62"/><circle cx="129" cy="73" r="1.4" fill="${light}" opacity="0.8"/><circle cx="68" cy="89" r="0.7" fill="${light}" opacity="0.55"/></pattern>`,
+      `<pattern id="${id}-b" width="181" height="149" patternUnits="userSpaceOnUse" patternTransform="translate(19 13)"><circle cx="17" cy="83" r="0.5" fill="${light}" opacity="0.4"/><circle cx="77" cy="24" r="0.8" fill="${light}" opacity="0.58"/><circle cx="151" cy="117" r="0.6" fill="${light}" opacity="0.46"/><path d="M119 58V64M116 61H122" stroke="${light}" stroke-width="0.8" opacity="0.6"/></pattern>`,
+      `<pattern id="${id}-c" width="223" height="173" patternUnits="userSpaceOnUse" patternTransform="translate(-31 29)"><circle cx="28" cy="19" r="0.45" fill="${light}" opacity="0.35"/><circle cx="94" cy="139" r="0.55" fill="${light}" opacity="0.42"/><circle cx="197" cy="67" r="0.75" fill="${light}" opacity="0.5"/></pattern>`,
+    );
+    return `<rect width="${cardW}" height="${cardH}" fill="url(#${id}-a)"/><rect width="${cardW}" height="${cardH}" fill="url(#${id}-b)"/><rect width="${cardW}" height="${cardH}" fill="url(#${id}-c)"/>`;
+  }
+
+  let content = "";
+  let width = 24;
+  let height = 24;
+  switch (pattern) {
+    case "grid":
+      width = 32;
+      height = 32;
+      content = `<path d="M32 0H0V32" fill="none" stroke="${muted}" stroke-width="1" opacity="0.26"/>`;
+      break;
+    case "fine-grid":
+      width = 12;
+      height = 12;
+      content = `<path d="M12 0H0V12" fill="none" stroke="${muted}" stroke-width="0.7" opacity="0.2"/>`;
+      break;
+    case "ruled":
+      width = 24;
+      height = 24;
+      content = `<path d="M0 23.5H24" stroke="${muted}" stroke-width="1" opacity="0.3"/>`;
+      break;
+    case "dots":
+      width = 18;
+      height = 18;
+      content = `<circle cx="2" cy="2" r="1.2" fill="${muted}" opacity="0.42"/>`;
+      break;
+    case "cross":
+      width = 24;
+      height = 24;
+      content = `<path d="M12 8V16M8 12H16" stroke="${muted}" stroke-width="1" opacity="0.34"/>`;
+      break;
+    case "diagonal":
+      width = 18;
+      height = 18;
+      content = `<path d="M-4 18L18-4M5 22L22 5" stroke="${muted}" stroke-width="1" opacity="0.24"/>`;
+      break;
+    case "waves":
+      width = 48;
+      height = 24;
+      content = `<path d="M0 12C8 3 16 3 24 12S40 21 48 12" fill="none" stroke="${muted}" stroke-width="1.2" opacity="0.28"/>`;
+      break;
+  }
+
+  defsParts.push(
+    `<pattern id="${id}" width="${width}" height="${height}" patternUnits="userSpaceOnUse">${content}</pattern>`,
+  );
+  return `<rect width="${cardW}" height="${cardH}" fill="url(#${id})"/>`;
+}
+
 /* ── Text measurement ── */
 
 export function estimateTextWidth(
@@ -397,6 +488,19 @@ export function generateSVG(
       : `<svg width="495" height="200" viewBox="0 0 495 200" fill="none" xmlns="http://www.w3.org/2000/svg"><style>text{font-family:${fontFamily} !important}</style>`;
 
   const defsParts: string[] = [];
+  const backgroundPattern = renderBackgroundPattern(
+    config.backgroundPattern || "none",
+    cardW,
+    cardH,
+    defsParts,
+  );
+  const backgroundClipId = safeSvgId(
+    "card-background-clip",
+    `${config.backgroundPattern || "none"}:${cardW}:${cardH}`,
+  );
+  defsParts.push(
+    `<clipPath id="${backgroundClipId}"><rect width="${cardW}" height="${cardH}" rx="${fs(12, fontScale)}"/></clipPath>`,
+  );
 
   const renderElement = (el: CardElement) => {
     if (!el.visible) return "";
@@ -678,7 +782,9 @@ export function generateSVG(
   return `
     ${svgOpen}
       <defs>${defsParts.join("")}</defs>
-      <rect width="${cardW || 495}" height="${cardH || 200}" rx="${fs(12, fontScale)}" fill="${escapeXml(bgColor || "#0d1117")}" stroke="${escapeXml(borderColor || "#30363d")}" stroke-width="${Math.max(1, fs(1, fontScale))}"/>
+      <rect width="${cardW || 495}" height="${cardH || 200}" rx="${fs(12, fontScale)}" fill="${escapeXml(bgColor || "#0d1117")}"/>
+      <g clip-path="url(#${backgroundClipId})">${backgroundPattern}</g>
+      <rect width="${cardW || 495}" height="${cardH || 200}" rx="${fs(12, fontScale)}" fill="none" stroke="${escapeXml(borderColor || "#30363d")}" stroke-width="${Math.max(1, fs(1, fontScale))}"/>
       ${renderedElements}
     </svg>
   `.trim();
