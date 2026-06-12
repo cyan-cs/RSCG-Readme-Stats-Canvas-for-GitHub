@@ -35,6 +35,7 @@ export const ko = {
   "auth.signIn": "GitHub로 로그인",
   "auth.welcome": "RSCG에 오신 것을 환영합니다",
   "common.auto": "자동",
+  "common.manual": "수동",
   "common.backgroundShort": "배경",
   "common.color": "색상",
   "common.colorUpper": "색상",
@@ -46,6 +47,9 @@ export const ko = {
   "defaults.completion": "완성도",
   "defaults.newText": "새 텍스트",
   "editor.background": "배경",
+  "editor.cardSize": "카드 크기",
+  "editor.cardSizeHint":
+    "자동은 표시 요소의 바깥 경계를 따라가며, 수동은 입력한 크기로 고정합니다.",
   "editor.decoration.title": "장식",
   "editor.drawer.addHint":
     "항목을 선택한 다음 캔버스를 클릭하거나 드래그하세요.",

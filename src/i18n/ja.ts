@@ -35,6 +35,7 @@ export const ja = {
   "auth.signIn": "GitHub でサインイン",
   "auth.welcome": "RSCG へようこそ",
   "common.auto": "自動",
+  "common.manual": "手動",
   "common.backgroundShort": "背景",
   "common.color": "色",
   "common.colorUpper": "色",
@@ -46,6 +47,9 @@ export const ja = {
   "defaults.completion": "達成度",
   "defaults.newText": "新しいテキスト",
   "editor.background": "背景",
+  "editor.cardSize": "カードサイズ",
+  "editor.cardSizeHint":
+    "自動は表示要素の外縁に追従し、手動は入力したサイズで固定します。",
   "editor.decoration.title": "装飾",
   "editor.drawer.addHint":
     "項目を選び、キャンバスをクリックするかドラッグしてください。",

@@ -69,6 +69,7 @@ type DrawerType =
   | "data"
   | "widgets";
 type DecorationTab = "line" | "shape";
+type SizeMode = "auto" | "manual";
 type ShapeDrawingState = {
   startX: number;
   startY: number;
@@ -79,6 +80,84 @@ type ShapeDrawingState = {
 };
 
 const HISTORY_LIMIT = 100;
+const CARD_PADDING = 16;
+
+function getElementExtent(element: CardElement): {
+  right: number;
+  bottom: number;
+} {
+  const fontSize = element.fontSize || 16;
+
+  if (element.type === "line") {
+    const x2 =
+      element.x2 ?? element.x + Math.max(0, element.lineWidth || 152);
+    const y2 = element.y2 ?? element.y + (element.lineHeight || 0);
+    return {
+      right: Math.max(element.x, x2) + (element.lineStrokeWidth || 2),
+      bottom: Math.max(element.y, y2) + (element.lineStrokeWidth || 2),
+    };
+  }
+  if (element.type === "shape") {
+    return {
+      right: element.x + (element.shapeWidth || 96),
+      bottom: element.y + (element.shapeHeight || 64),
+    };
+  }
+  if (element.type === "text") {
+    const width = estimateTextWidth(element.text || "", fontSize, true);
+    const left =
+      element.textAlign === "center"
+        ? element.x - width / 2
+        : element.textAlign === "right"
+          ? element.x - width
+          : element.x;
+    return { right: left + width, bottom: element.y + 4 };
+  }
+
+  const sizeByType: Partial<Record<ElementType, [number, number]>> = {
+    stats: [300, 110],
+    languages: [element.languageBarWidth || 320, 80],
+    avatar: [Math.max(64, fontSize * 4), Math.max(64, fontSize * 4)],
+    stars: [180, 40],
+    followers: [180, 40],
+    contributions: [300, 90],
+    badge: [
+      estimateTextWidth(element.badgeText || "LABEL", fontSize, true) + 24,
+      fontSize + 16,
+    ],
+    progress: [element.progressBarWidth || 160, 32],
+    calendar: [220, 30],
+    rating: [Math.max(72, fontSize * 4), Math.max(72, fontSize * 4)],
+  };
+  const [width, height] = sizeByType[element.type] || [80, 40];
+  return {
+    right: element.x + width,
+    bottom: element.y + height,
+  };
+}
+
+function calculateAutoCardSize(elements: CardElement[]): {
+  width: number;
+  height: number;
+} {
+  const visibleElements = elements.filter((element) => element.visible);
+  if (visibleElements.length === 0) return { width: 100, height: 100 };
+
+  const extent = visibleElements.reduce(
+    (result, element) => {
+      const next = getElementExtent(element);
+      return {
+        right: Math.max(result.right, next.right),
+        bottom: Math.max(result.bottom, next.bottom),
+      };
+    },
+    { right: 0, bottom: 0 },
+  );
+  return {
+    width: Math.min(1200, Math.max(100, Math.ceil(extent.right + CARD_PADDING))),
+    height: Math.min(800, Math.max(50, Math.ceil(extent.bottom + CARD_PADDING))),
+  };
+}
 
 const SHAPE_PRESETS: Array<{
   type: ShapeType;
@@ -454,6 +533,25 @@ export default function EditorPage() {
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [snapTo8px, setSnapTo8px] = useState(true);
+  const [showSizeMenu, setShowSizeMenu] = useState(false);
+  const [widthMode, setWidthMode] = useState<SizeMode>(() => {
+    try {
+      return localStorage.getItem("rscg-width-mode") === "auto"
+        ? "auto"
+        : "manual";
+    } catch {
+      return "manual";
+    }
+  });
+  const [heightMode, setHeightMode] = useState<SizeMode>(() => {
+    try {
+      return localStorage.getItem("rscg-height-mode") === "manual"
+        ? "manual"
+        : "auto";
+    } catch {
+      return "auto";
+    }
+  });
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -1125,6 +1223,7 @@ export default function EditorPage() {
         setShowShareModal(false);
         setShowPublishModal(false);
         setShowPublishOptions(false);
+        setShowSizeMenu(false);
         setShowLangMenu(false);
         setShowSaveModal(false);
         setConfirmModal(null);
@@ -1156,6 +1255,25 @@ export default function EditorPage() {
       localStorage.setItem("rscg-config", JSON.stringify(config));
     } catch {}
   }, [config, isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    const autoSize = calculateAutoCardSize(config.elements);
+    const frame = requestAnimationFrame(() => {
+      setConfig((current) => {
+        const width = widthMode === "auto" ? autoSize.width : current.width;
+        const height = heightMode === "auto" ? autoSize.height : current.height;
+        return width === current.width && height === current.height
+          ? current
+          : { ...current, width, height };
+      });
+    });
+    try {
+      localStorage.setItem("rscg-width-mode", widthMode);
+      localStorage.setItem("rscg-height-mode", heightMode);
+    } catch {}
+    return () => cancelAnimationFrame(frame);
+  }, [config.elements, heightMode, isInitialized, widthMode]);
 
   // Load shared template from ?template= URL parameter
   const templateLoadedRef = useRef(false);
@@ -1267,25 +1385,6 @@ export default function EditorPage() {
         );
         return;
       }
-      // Automatic height calculation
-      const calculateHeight = (elements: CardElement[]) => {
-        if (elements.length === 0) return 100;
-        const bottomMost = elements.reduce((max, el) => {
-          let elBottom = el.y;
-          if (el.type === "stats") elBottom += 110;
-          else if (el.type === "languages") elBottom += 80;
-          else if (el.type === "stars") elBottom += 40;
-          else if (el.type === "followers") elBottom += 40;
-          else if (el.type === "contributions") elBottom += 90;
-          else if (el.type === "badge") elBottom += 40;
-          else if (el.type === "progress") elBottom += 30;
-          else if (el.type === "calendar") elBottom += 25;
-          else if (el.type === "shape") elBottom += el.shapeHeight || 64;
-          return Math.max(max, elBottom);
-        }, 0);
-        return Math.max(100, bottomMost + 15);
-      };
-
       if (resizing && canvasRef.current) {
         // We no longer manually resize height via drag, but we keep the state check if needed for other things
         return;
@@ -1362,7 +1461,6 @@ export default function EditorPage() {
           return {
             ...prev,
             elements: newElements,
-            height: calculateHeight(newElements),
           };
         });
         return;
@@ -1505,7 +1603,6 @@ export default function EditorPage() {
           return {
             ...prev,
             elements: newElements,
-            height: calculateHeight(newElements),
           };
         });
       }
@@ -2148,6 +2245,114 @@ export default function EditorPage() {
           )}
 
           <div className="flex items-center gap-2 ml-auto">
+            <div className="relative">
+              <button
+                onClick={() => setShowSizeMenu((current) => !current)}
+                className={`flex h-7 items-center gap-1.5 rounded px-2 text-[9px] font-bold transition-colors ${
+                  showSizeMenu ||
+                  widthMode === "auto" ||
+                  heightMode === "auto"
+                    ? "bg-[#7d2ae8]/15 text-[#b985ff]"
+                    : "text-zinc-500 hover:bg-[#2a2a32] hover:text-white"
+                }`}
+                title={t("editor.cardSize")}
+                aria-label={t("editor.cardSize")}
+                aria-expanded={showSizeMenu}
+              >
+                {config.width} × {config.height}
+              </button>
+              {showSizeMenu && (
+                <div
+                  className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg border border-[#35313d] bg-[#17161c] p-3 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="mb-3">
+                    <p className="text-[10px] font-bold text-white">
+                      {t("editor.cardSize")}
+                    </p>
+                    <p className="mt-1 text-[8px] leading-relaxed text-zinc-600">
+                      {t("editor.cardSizeHint")}
+                    </p>
+                  </div>
+                  {[
+                    {
+                      label: t("editor.orientation.horizontal"),
+                      mode: widthMode,
+                      setMode: setWidthMode,
+                      value: config.width,
+                      min: 50,
+                      max: 1200,
+                      update: (value: number) =>
+                        setConfig((current) => ({
+                          ...current,
+                          width: value,
+                        })),
+                    },
+                    {
+                      label: t("editor.orientation.vertical"),
+                      mode: heightMode,
+                      setMode: setHeightMode,
+                      value: config.height,
+                      min: 20,
+                      max: 800,
+                      update: (value: number) =>
+                        setConfig((current) => ({
+                          ...current,
+                          height: value,
+                        })),
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="mb-2.5 grid grid-cols-[38px_1fr_68px] items-center gap-2 last:mb-0"
+                    >
+                      <span className="text-[9px] font-bold text-zinc-500">
+                        {item.label}
+                      </span>
+                      <div className="grid grid-cols-2 rounded-md bg-[#222028] p-0.5">
+                        {(["auto", "manual"] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => item.setMode(mode)}
+                            className={`rounded px-1.5 py-1 text-[8px] font-bold transition-colors ${
+                              item.mode === mode
+                                ? "bg-[#7d2ae8] text-white"
+                                : "text-zinc-500 hover:text-white"
+                            }`}
+                          >
+                            {t(
+                              mode === "auto"
+                                ? "common.auto"
+                                : "common.manual",
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="number"
+                        min={item.min}
+                        max={item.max}
+                        value={item.value}
+                        disabled={item.mode === "auto"}
+                        onFocus={saveToHistory}
+                        onChange={(e) =>
+                          item.update(
+                            Math.max(
+                              item.min,
+                              Math.min(
+                                item.max,
+                                parseInt(e.target.value) || item.min,
+                              ),
+                            ),
+                          )
+                        }
+                        className="h-7 rounded border border-[#35313d] bg-[#111016] px-2 text-[9px] text-zinc-300 outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setShowGrid(!showGrid)}
               className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${showGrid ? "bg-[#7d2ae8]/15 text-[#9d5af2]" : "text-zinc-500 hover:bg-[#2a2a32] hover:text-white"}`}

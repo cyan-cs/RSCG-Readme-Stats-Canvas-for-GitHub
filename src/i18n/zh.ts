@@ -34,6 +34,7 @@ export const zh = {
   "auth.signIn": "使用 GitHub 登录",
   "auth.welcome": "欢迎使用 RSCG",
   "common.auto": "自动",
+  "common.manual": "手动",
   "common.backgroundShort": "背景",
   "common.color": "颜色",
   "common.colorUpper": "颜色",
@@ -45,6 +46,9 @@ export const zh = {
   "defaults.completion": "完成度",
   "defaults.newText": "新文本",
   "editor.background": "背景",
+  "editor.cardSize": "卡片尺寸",
+  "editor.cardSizeHint":
+    "自动模式会跟随可见元素的外边缘，手动模式则保持输入的固定尺寸。",
   "editor.decoration.title": "装饰",
   "editor.drawer.addHint": "选择一个项目，然后点击或拖到画布上。",
   "editor.githubData.title": "GitHub 数据",

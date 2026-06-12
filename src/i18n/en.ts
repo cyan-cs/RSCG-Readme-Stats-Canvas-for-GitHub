@@ -33,6 +33,7 @@ export const en = {
   "auth.signIn": "Sign in with GitHub",
   "auth.welcome": "Welcome to RSCG",
   "common.auto": "AUTO",
+  "common.manual": "MANUAL",
   "common.backgroundShort": "BG",
   "common.color": "Color",
   "common.colorUpper": "COLOR",
@@ -44,6 +45,9 @@ export const en = {
   "defaults.completion": "Completion",
   "defaults.newText": "New Text",
   "editor.background": "Background",
+  "editor.cardSize": "Card size",
+  "editor.cardSizeHint":
+    "Auto follows the outer edge of visible elements. Manual keeps a fixed value.",
   "editor.decoration.title": "DECORATION",
   "editor.drawer.addHint":
     "Choose an item, then click or drag it onto the canvas.",
