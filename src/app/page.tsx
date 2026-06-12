@@ -14,6 +14,7 @@ import {
 } from "@/lib/svg-engine";
 import type { GitHubStats } from "@/lib/github-api";
 import { cardConfigSchema, cardElementSchema } from "@/lib/validation";
+import { buildLinkedCardMarkdown } from "@/lib/embed-code";
 import {
   translate,
   type TranslationKey,
@@ -1862,7 +1863,7 @@ export default function EditorPage() {
 
   const handleCopyMD = () => {
     if (publishedUrl) {
-      navigator.clipboard.writeText(`![card](${publishedUrl})`);
+      navigator.clipboard.writeText(buildLinkedCardMarkdown(publishedUrl));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

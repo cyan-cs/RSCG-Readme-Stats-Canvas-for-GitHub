@@ -10,6 +10,7 @@ import {
   readLimitedTextBody,
 } from "../src/lib/request-body";
 import { generateSVG, type CardConfig } from "../src/lib/svg-engine";
+import { buildLinkedCardMarkdown } from "../src/lib/embed-code";
 import {
   cardConfigSchema,
   cardElementSchema,
@@ -119,6 +120,13 @@ test("request bodies are limited by header and streamed size", async () => {
       5,
     ),
     BodyTooLargeError,
+  );
+});
+
+test("published card markdown links the image to the RSCG site", () => {
+  assert.equal(
+    buildLinkedCardMarkdown("https://rscg.cy-an.net/octocat"),
+    "[![GitHub Stats Card](https://rscg.cy-an.net/octocat)](https://rscg.cy-an.net)",
   );
 });
 
