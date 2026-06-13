@@ -82,7 +82,7 @@ export default function LandingPage({ locale }: { locale: Locale }) {
             className="flex items-center gap-3 font-bold tracking-tight"
             aria-label="RSCG home"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 text-sm font-black shadow-[0_10px_30px_rgba(124,58,237,0.35)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-sm font-black shadow-[0_10px_30px_rgba(124,58,237,0.28)]">
               R
             </span>
             <span>
@@ -119,17 +119,17 @@ export default function LandingPage({ locale }: { locale: Locale }) {
 
       <main>
         <section className="relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(124,58,237,0.22),transparent_34%),radial-gradient(circle_at_85%_40%,rgba(88,166,255,0.12),transparent_32%)]" />
+          <div className="absolute inset-x-0 top-0 h-px bg-violet-400/25" />
           <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:48px_48px]" />
 
-          <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-5 py-20 sm:px-8 sm:py-28 lg:grid-cols-[1.02fr_0.98fr] lg:py-36">
-            <div>
+          <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28 lg:py-36">
+            <div className="max-w-4xl">
               <p className="mb-6 inline-flex items-center rounded-full border border-violet-400/25 bg-violet-500/8 px-4 py-2 text-xs font-bold tracking-[0.16em] text-violet-200 uppercase">
                 {content.eyebrow}
               </p>
               <h1 className="max-w-4xl text-4xl leading-[1.06] font-black tracking-[-0.04em] sm:text-6xl lg:text-7xl">
                 {content.title}
-                <span className="mt-2 block bg-gradient-to-r from-violet-300 via-fuchsia-300 to-sky-300 bg-clip-text text-transparent">
+                <span className="mt-2 block text-violet-300">
                   {content.titleAccent}
                 </span>
               </h1>
@@ -150,81 +150,6 @@ export default function LandingPage({ locale }: { locale: Locale }) {
                 >
                   {content.secondaryCta}
                 </a>
-              </div>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-xl">
-              <div className="absolute -inset-10 rounded-full bg-violet-600/15 blur-3xl" />
-              <div className="relative rounded-3xl border border-white/10 bg-[#111119] p-3 shadow-2xl shadow-black/50">
-                <div className="flex items-center gap-2 border-b border-white/8 px-3 pb-3 text-[11px] font-medium text-zinc-500">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-                  <span className="ml-2">{content.previewLabel}</span>
-                </div>
-                <div className="mt-3 rounded-2xl border border-[#30363d] bg-[#0d1117] p-6 sm:p-8">
-                  <div className="flex items-start justify-between gap-5">
-                    <div>
-                      <p className="text-xl font-bold text-[#58a6ff]">
-                        {content.previewTitle}
-                      </p>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        github.com/octocat
-                      </p>
-                    </div>
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-sky-500 text-sm font-black">
-                      OC
-                    </div>
-                  </div>
-                  <div className="mt-7 grid grid-cols-3 gap-2">
-                    {content.previewStats.map((stat) => (
-                      <div
-                        key={stat}
-                        className="rounded-lg border border-white/7 bg-white/[0.025] px-2 py-3 text-center text-[10px] font-semibold text-zinc-300 sm:text-xs"
-                      >
-                        {stat}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-6 flex h-3 overflow-hidden rounded-full bg-zinc-800">
-                    <span className="w-[58%] bg-[#3178c6]" />
-                    <span className="w-[27%] bg-[#3572A5]" />
-                    <span className="w-[15%] bg-[#663399]" />
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[10px] text-zinc-400 sm:text-xs">
-                    {content.previewLanguages.map((language, index) => (
-                      <span
-                        key={language}
-                        className="flex items-center gap-1.5"
-                      >
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            ["bg-[#3178c6]", "bg-[#3572A5]", "bg-[#663399]"][
-                              index
-                            ]
-                          }`}
-                        />
-                        {language}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-7 grid grid-cols-12 gap-1">
-                    {Array.from({ length: 60 }, (_, index) => (
-                      <span
-                        key={index}
-                        className={`aspect-square rounded-[2px] ${
-                          index % 11 === 0
-                            ? "bg-[#39d353]"
-                            : index % 5 === 0
-                              ? "bg-[#26a641]"
-                              : index % 3 === 0
-                                ? "bg-[#0e4429]"
-                                : "bg-[#161b22]"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -270,7 +195,7 @@ export default function LandingPage({ locale }: { locale: Locale }) {
             {content.steps.map((step, index) => (
               <article
                 key={step.title}
-                className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-b from-white/[0.04] to-transparent p-7"
+                className="relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.025] p-7"
               >
                 <span className="text-6xl font-black text-white/[0.045]">
                   0{index + 1}
@@ -311,7 +236,7 @@ export default function LandingPage({ locale }: { locale: Locale }) {
         </section>
 
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(124,58,237,0.28),transparent_50%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-violet-600/[0.06]" />
           <div className="relative mx-auto max-w-4xl px-5 py-24 text-center sm:px-8 sm:py-32">
             <h2 className="text-3xl font-black tracking-[-0.04em] sm:text-5xl">
               {content.finalHeading}
