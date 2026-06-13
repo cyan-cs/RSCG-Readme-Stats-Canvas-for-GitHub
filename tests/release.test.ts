@@ -22,6 +22,17 @@ import {
 } from "../src/lib/editor-ui";
 import { cardConfigSchema, cardElementSchema } from "../src/lib/validation";
 import { formatMetricCount } from "../src/lib/site-metrics";
+import {
+  createLandingMetadata,
+  createLandingStructuredData,
+  landingLocales,
+} from "../src/lib/landing";
+import {
+  buildLoginCallbackUrl,
+  normalizeCallbackUrl,
+} from "../src/lib/navigation";
+import sitemap from "../src/app/sitemap";
+import robots from "../src/app/robots";
 
 const validConfig: CardConfig = {
   username: "octocat",
@@ -199,4 +210,71 @@ test("language legend defaults to six languages and groups the rest", () => {
     legend.reduce((sum, language) => sum + language.percent, 0),
     100,
   );
+});
+
+test("landing metadata has reciprocal locale alternates", () => {
+  for (const locale of landingLocales) {
+    const metadata = createLandingMetadata(locale);
+    assert.equal(metadata.alternates?.canonical, `/${locale}`);
+    assert.deepEqual(metadata.alternates?.languages, {
+      en: "/en",
+      ja: "/ja",
+      ko: "/ko",
+      zh: "/zh",
+      "x-default": "/en",
+    });
+    assert.equal(typeof metadata.robots, "object");
+    assert.equal(
+      (metadata.robots as { index?: boolean } | undefined)?.index,
+      true,
+    );
+
+    const structuredData = createLandingStructuredData(locale);
+    assert.equal(structuredData["@graph"][1]["@type"], "WebApplication");
+    assert.equal(
+      structuredData["@graph"][1].applicationCategory,
+      "DesignApplication",
+    );
+  }
+});
+
+test("sitemap contains only canonical landing pages", () => {
+  assert.deepEqual(
+    sitemap().map((entry) => entry.url),
+    [
+      "https://rscg.cy-an.net/en",
+      "https://rscg.cy-an.net/ja",
+      "https://rscg.cy-an.net/ko",
+      "https://rscg.cy-an.net/zh",
+    ],
+  );
+  assert.equal(
+    sitemap().some((entry) => "lastModified" in entry),
+    false,
+  );
+});
+
+test("robots keeps public cards crawlable while excluding APIs", () => {
+  const config = robots();
+  assert.deepEqual(config.rules, [
+    {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/api/"],
+    },
+  ]);
+});
+
+test("editor login callbacks preserve local query strings safely", () => {
+  assert.equal(
+    buildLoginCallbackUrl("/editor", "?template=abc"),
+    "/editor?template=abc",
+  );
+  assert.equal(
+    normalizeCallbackUrl("/editor?template=abc"),
+    "/editor?template=abc",
+  );
+  assert.equal(normalizeCallbackUrl("https://example.com"), "/editor");
+  assert.equal(normalizeCallbackUrl("//example.com"), "/editor");
+  assert.equal(normalizeCallbackUrl("/\\example.com"), "/editor");
 });

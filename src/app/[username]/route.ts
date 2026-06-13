@@ -278,6 +278,9 @@ export async function GET(
             : "image/svg+xml; charset=utf-8",
           etag,
         ),
+        ...(representation === "html"
+          ? { "X-Robots-Tag": "noindex, follow" }
+          : {}),
         "Access-Control-Allow-Origin": "*",
       },
     });
@@ -300,6 +303,7 @@ export async function GET(
 <meta name="viewport" content="width=device-width"/>
 <title>${safeTitle}</title>
 <meta name="description" content="${safeDescription}"/>
+<meta name="robots" content="noindex, follow"/>
 <meta property="og:title" content="${safeTitle}"/>
 <meta property="og:description" content="${safeDescription}"/>
 <meta property="og:type" content="profile"/>
@@ -320,7 +324,10 @@ export async function GET(
 </body>
 </html>`;
     return new NextResponse(html, {
-      headers: variantHeaders("text/html; charset=utf-8", etag),
+      headers: {
+        ...variantHeaders("text/html; charset=utf-8", etag),
+        "X-Robots-Tag": "noindex, follow",
+      },
     });
   }
 

@@ -14,7 +14,7 @@ const MAX_BODY_SIZE = 50_000; // 50KB max config size
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 5;
-const PUBLIC_APP_URL = "https://rscg.cy-an.net/";
+const PUBLIC_EDITOR_URL = "https://rscg.cy-an.net/editor";
 
 /** POST — save current config and return a shareable URL */
 export async function POST(request: NextRequest) {
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       SHARED_MAX,
     );
 
-    const shareUrl = new URL(PUBLIC_APP_URL);
+    const shareUrl = new URL(PUBLIC_EDITOR_URL);
     shareUrl.searchParams.set("template", hash);
     return NextResponse.json({ url: shareUrl.toString() });
   } catch (error) {

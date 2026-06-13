@@ -137,13 +137,14 @@ data directory at `/app/data`.
 
 ## Environment Variables
 
-| Variable             | Description                                   |
-| -------------------- | --------------------------------------------- |
-| `AUTH_GITHUB_ID`     | GitHub OAuth App Client ID                    |
-| `AUTH_GITHUB_SECRET` | GitHub OAuth App Client Secret                |
-| `AUTH_SECRET`        | Random string for session encryption          |
-| `AUTH_URL`           | Base URL of your deployment                   |
-| `GITHUB_TOKEN`       | (Optional) GitHub PAT to increase rate limits |
+| Variable                   | Description                                   |
+| -------------------------- | --------------------------------------------- |
+| `AUTH_GITHUB_ID`           | GitHub OAuth App Client ID                    |
+| `AUTH_GITHUB_SECRET`       | GitHub OAuth App Client Secret                |
+| `AUTH_SECRET`              | Random string for session encryption          |
+| `AUTH_URL`                 | Base URL of your deployment                   |
+| `GITHUB_TOKEN`             | (Optional) GitHub PAT to increase rate limits |
+| `GOOGLE_SITE_VERIFICATION` | (Optional) Search Console verification token  |
 
 ---
 

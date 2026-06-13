@@ -1,12 +1,27 @@
+import type { Metadata } from "next";
 import { signIn } from "@/auth";
 import { LogIn } from "lucide-react";
 import { headers } from "next/headers";
 import { resolveLocale, translate, type TranslationKey } from "@/i18n";
+import { normalizeCallbackUrl } from "@/lib/navigation";
 
-export default async function LoginPage() {
+export const metadata: Metadata = {
+  title: "Sign in to RSCG",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}) {
   const acceptLanguage = (await headers()).get("accept-language") || "";
   const locale = resolveLocale(acceptLanguage);
   const t = (key: TranslationKey) => translate(locale, key);
+  const callbackUrl = normalizeCallbackUrl((await searchParams).callbackUrl);
   return (
     <div className="min-h-screen bg-[#1e1e24] flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-[#121217] rounded-2xl border border-[#2a2a32] p-8 shadow-2xl text-center space-y-8">
@@ -20,7 +35,7 @@ export default async function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("github", { redirectTo: "/" });
+            await signIn("github", { redirectTo: callbackUrl });
           }}
         >
           <button

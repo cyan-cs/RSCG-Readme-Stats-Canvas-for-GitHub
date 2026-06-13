@@ -77,7 +77,7 @@ async function openEditor(page: Page) {
     }),
   );
 
-  await page.goto("/");
+  await page.goto("/editor");
   await expect(
     page.getByText("Select an element", { exact: true }),
   ).toBeVisible();
