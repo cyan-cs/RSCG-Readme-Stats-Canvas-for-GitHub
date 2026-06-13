@@ -59,7 +59,9 @@ export async function GET() {
           padding: "62px 38px 62px 72px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 28 }}>
+        <div
+          style={{ display: "flex", alignItems: "center", marginBottom: 28 }}
+        >
           <div
             style={{
               width: 54,

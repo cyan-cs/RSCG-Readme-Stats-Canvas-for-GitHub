@@ -19,9 +19,7 @@ test("redirects the root by Accept-Language without shared caching", async ({
     expect(response.status()).toBe(307);
     expect(
       new URL(response.headers().location, "http://127.0.0.1:3000").pathname,
-    ).toBe(
-      `/${expectedLocale}`,
-    );
+    ).toBe(`/${expectedLocale}`);
     expect(response.headers().vary).toContain("Accept-Language");
     expect(response.headers()["cache-control"]).toContain("no-store");
   }

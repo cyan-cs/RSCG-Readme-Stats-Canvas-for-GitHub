@@ -5,7 +5,24 @@
   "width": 495,
   "height": 130,
   "elements": [
-    {"id":"1","type":"text","x":24,"y":24,"text":"Contributions","fontSize":18,"visible":true,"color":"#58a6ff","textAlign":"left"},
-    {"id":"2","type":"contributions","x":24,"y":50,"visible":true,"color":"#ffffff"}
+    {
+      "id": "1",
+      "type": "text",
+      "x": 24,
+      "y": 24,
+      "text": "Contributions",
+      "fontSize": 18,
+      "visible": true,
+      "color": "#58a6ff",
+      "textAlign": "left"
+    },
+    {
+      "id": "2",
+      "type": "contributions",
+      "x": 24,
+      "y": 50,
+      "visible": true,
+      "color": "#ffffff"
+    }
   ]
 }

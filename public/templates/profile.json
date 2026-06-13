@@ -5,11 +5,60 @@
   "width": 380,
   "height": 240,
   "elements": [
-    {"id":"1","type":"avatar","x":16,"y":16,"visible":true,"color":"#58a6ff"},
-    {"id":"2","type":"text","x":82,"y":32,"text":"Profile","fontSize":20,"visible":true,"color":"#58a6ff","textAlign":"left"},
-    {"id":"3","type":"stats","x":16,"y":76,"fontSize":14,"visible":true,"color":"#e1e1e1"},
-    {"id":"4","type":"line","x":16,"y":150,"visible":true,"color":"#e94560","lineWidth":348},
-    {"id":"5","type":"languages","x":16,"y":166,"visible":true,"color":"#e1e1e1"},
-    {"id":"6","type":"badge","x":220,"y":20,"fontSize":12,"visible":true,"badgeText":"PRO","badgeColor":"#e94560"}
+    {
+      "id": "1",
+      "type": "avatar",
+      "x": 16,
+      "y": 16,
+      "visible": true,
+      "color": "#58a6ff"
+    },
+    {
+      "id": "2",
+      "type": "text",
+      "x": 82,
+      "y": 32,
+      "text": "Profile",
+      "fontSize": 20,
+      "visible": true,
+      "color": "#58a6ff",
+      "textAlign": "left"
+    },
+    {
+      "id": "3",
+      "type": "stats",
+      "x": 16,
+      "y": 76,
+      "fontSize": 14,
+      "visible": true,
+      "color": "#e1e1e1"
+    },
+    {
+      "id": "4",
+      "type": "line",
+      "x": 16,
+      "y": 150,
+      "visible": true,
+      "color": "#e94560",
+      "lineWidth": 348
+    },
+    {
+      "id": "5",
+      "type": "languages",
+      "x": 16,
+      "y": 166,
+      "visible": true,
+      "color": "#e1e1e1"
+    },
+    {
+      "id": "6",
+      "type": "badge",
+      "x": 220,
+      "y": 20,
+      "fontSize": 12,
+      "visible": true,
+      "badgeText": "PRO",
+      "badgeColor": "#e94560"
+    }
   ]
 }

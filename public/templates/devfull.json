@@ -5,14 +5,92 @@
   "width": 495,
   "height": 280,
   "elements": [
-    {"id":"1","type":"avatar","x":16,"y":16,"visible":true,"color":"#58a6ff"},
-    {"id":"2","type":"text","x":82,"y":32,"text":"Developer Profile","fontSize":22,"visible":true,"color":"#58a6ff","textAlign":"left"},
-    {"id":"3","type":"badge","x":240,"y":22,"fontSize":10,"visible":true,"badgeText":"DEV","badgeColor":"#7d2ae8"},
-    {"id":"4","type":"stats","x":16,"y":76,"fontSize":13,"visible":true,"color":"#ffffff"},
-    {"id":"5","type":"stars","x":16,"y":140,"fontSize":14,"visible":true,"color":"#e3b341"},
-    {"id":"6","type":"followers","x":220,"y":140,"fontSize":14,"visible":true,"color":"#ffffff"},
-    {"id":"7","type":"line","x":16,"y":190,"visible":true,"color":"#30363d","lineWidth":463,"lineHeight":0,"lineStyle":"solid","lineStrokeWidth":1},
-    {"id":"8","type":"languages","x":16,"y":210,"visible":true,"color":"#ffffff"},
-    {"id":"9","type":"text","x":16,"y":260,"text":"★ Top Languages","fontSize":12,"visible":true,"color":"#8b949e","textAlign":"left"}
+    {
+      "id": "1",
+      "type": "avatar",
+      "x": 16,
+      "y": 16,
+      "visible": true,
+      "color": "#58a6ff"
+    },
+    {
+      "id": "2",
+      "type": "text",
+      "x": 82,
+      "y": 32,
+      "text": "Developer Profile",
+      "fontSize": 22,
+      "visible": true,
+      "color": "#58a6ff",
+      "textAlign": "left"
+    },
+    {
+      "id": "3",
+      "type": "badge",
+      "x": 240,
+      "y": 22,
+      "fontSize": 10,
+      "visible": true,
+      "badgeText": "DEV",
+      "badgeColor": "#7d2ae8"
+    },
+    {
+      "id": "4",
+      "type": "stats",
+      "x": 16,
+      "y": 76,
+      "fontSize": 13,
+      "visible": true,
+      "color": "#ffffff"
+    },
+    {
+      "id": "5",
+      "type": "stars",
+      "x": 16,
+      "y": 140,
+      "fontSize": 14,
+      "visible": true,
+      "color": "#e3b341"
+    },
+    {
+      "id": "6",
+      "type": "followers",
+      "x": 220,
+      "y": 140,
+      "fontSize": 14,
+      "visible": true,
+      "color": "#ffffff"
+    },
+    {
+      "id": "7",
+      "type": "line",
+      "x": 16,
+      "y": 190,
+      "visible": true,
+      "color": "#30363d",
+      "lineWidth": 463,
+      "lineHeight": 0,
+      "lineStyle": "solid",
+      "lineStrokeWidth": 1
+    },
+    {
+      "id": "8",
+      "type": "languages",
+      "x": 16,
+      "y": 210,
+      "visible": true,
+      "color": "#ffffff"
+    },
+    {
+      "id": "9",
+      "type": "text",
+      "x": 16,
+      "y": 260,
+      "text": "★ Top Languages",
+      "fontSize": 12,
+      "visible": true,
+      "color": "#8b949e",
+      "textAlign": "left"
+    }
   ]
 }

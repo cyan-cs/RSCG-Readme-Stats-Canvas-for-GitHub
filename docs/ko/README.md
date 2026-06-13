@@ -7,8 +7,9 @@
 ---
 
 ### 주요 기능
+
 - **시각적 드래그 앤 드롭 에디터**: 캔버스에서 직관적으로 요소를 배치하고 편집할 수 있습니다.
-- **다양한 위젯**: 
+- **다양한 위젯**:
   - **GitHub 통계**: 커밋, 스타, 리포지토리, 팔로워 수.
   - **기여 히트맵**: 익숙한 GitHub "잔디" 시각화.
   - **언어 분포**: 주로 사용하는 프로그래밍 언어 동적 분석.
@@ -20,6 +21,7 @@
 - **고성능**: ETag 캐싱 및 304 Not Modified 지원을 통해 최적화된 SVG 렌더링을 제공합니다.
 
 ### 기술 스택
+
 - **프레임워크**: Next.js 16 (App Router)
 - **언어**: TypeScript
 - **스타일링**: Tailwind CSS 4
@@ -32,26 +34,32 @@
 ## 시작하기
 
 ### 요구 사항
+
 - Node.js 20.9.0 이상
 - npm 10 이상
 
 ### 로컬 개발
+
 1. **저장소 클론**:
+
    ```bash
    git clone https://github.com/cyan-cs/RSCG-Readme-Stats-Canvas-for-GitHub.git
    cd RSCG-Readme-Stats-Canvas-for-GitHub
    ```
 
 2. **의존성 설치**:
+
    ```bash
    npm install
    ```
 
 3. **환경 변수 설정**:
    예시 파일을 복사하여 `.env` 파일을 생성합니다.
+
    ```bash
    cp .env.example .env
    ```
+
    GitHub OAuth 자격 증명 및 기타 필요한 변수를 입력하세요.
 
 4. **개발 서버 실행**:
@@ -60,7 +68,9 @@
    ```
 
 ### Docker 설정
+
 1. **이미지 빌드**:
+
    ```bash
    docker build -t profilecanvas .
    ```
@@ -72,21 +82,22 @@
      -v $(pwd)/data:/app/data \
      profilecanvas
    ```
-   *참고: 카드 데이터베이스를 유지하려면 `/app/data` 볼륨 마운트가 필요합니다.*
+   _참고: 카드 데이터베이스를 유지하려면 `/app/data` 볼륨 마운트가 필요합니다._
 
 ---
 
 ## 환경 변수
 
-| 변수명 | 설명 |
-|----------|-------------|
-| `AUTH_GITHUB_ID` | GitHub OAuth App Client ID |
-| `AUTH_GITHUB_SECRET` | GitHub OAuth App Client Secret |
-| `AUTH_SECRET` | 세션 암호화를 위한 랜덤 문자열 |
-| `AUTH_URL` | 배포 환경의 기본 URL |
-| `GITHUB_TOKEN` | (선택 사항) API 속도 제한을 늘리기 위한 GitHub PAT |
+| 변수명               | 설명                                               |
+| -------------------- | -------------------------------------------------- |
+| `AUTH_GITHUB_ID`     | GitHub OAuth App Client ID                         |
+| `AUTH_GITHUB_SECRET` | GitHub OAuth App Client Secret                     |
+| `AUTH_SECRET`        | 세션 암호화를 위한 랜덤 문자열                     |
+| `AUTH_URL`           | 배포 환경의 기본 URL                               |
+| `GITHUB_TOKEN`       | (선택 사항) API 속도 제한을 늘리기 위한 GitHub PAT |
 
 ---
 
 ## 📜 라이선스
+
 이 프로젝트는 MIT 라이선스에 따라 배포됩니다. 자세한 내용은 [LICENSE](../../LICENSE) 파일을 참조하세요.
