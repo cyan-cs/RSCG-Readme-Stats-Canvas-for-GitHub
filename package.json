@@ -14,9 +14,15 @@
     "start": "next start",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
-    "lint": "eslint",
+    "l": "eslint .",
+    "f": "prettier . --write",
+    "c": "npm run check",
+    "lint": "eslint .",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "typecheck": "tsc --noEmit --incremental false",
-    "generate-previews": "npx tsx scripts/generate-template-previews.ts && npx tsx scripts/generate-line-previews.ts"
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "generate-previews": "tsx scripts/generate-template-previews.ts && tsx scripts/generate-line-previews.ts"
   },
   "dependencies": {
     "@octokit/graphql": "^9.0.3",
