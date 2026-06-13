@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import Image from "next/image";
 import {
   CardElement,
   CardConfig,
@@ -3154,13 +3155,16 @@ export default function EditorPage() {
                   }}
                   className="flex flex-col items-center gap-1 group"
                 >
-                  <img
+                  <Image
                     src={
                       templatePreviews[t]
                         ? `data:image/svg+xml,${encodeURIComponent(templatePreviews[t])}`
                         : `/templates/${t}.svg`
                     }
                     alt={t}
+                    width={300}
+                    height={200}
+                    unoptimized
                     className="w-full aspect-[3/2] object-contain rounded border border-[#2a2a32] bg-[#1e1e24] group-hover:border-[#7d2ae8] transition-colors"
                   />
                   <span className="text-[8px] font-bold text-zinc-500 uppercase group-hover:text-white transition-colors">
@@ -3556,11 +3560,12 @@ export default function EditorPage() {
                         }}
                         className="group flex flex-col items-center gap-1 rounded border border-[#2a2a32] bg-[#1e1e24] px-1 py-2 text-zinc-400 transition-colors hover:bg-[#2a2a32] hover:text-white"
                       >
-                        <img
+                        <Image
                           alt=""
                           src={`/line-previews/${lineThickness}/${style}-${LINE_COLOR_NAMES[lineColor] || "white"}.svg`}
-                          width="80"
-                          height="16"
+                          width={80}
+                          height={16}
+                          unoptimized
                           className="group-hover:brightness-110"
                         />
                         <span className="text-[7px] font-bold text-zinc-500 group-hover:text-white">
@@ -4124,10 +4129,13 @@ export default function EditorPage() {
               rel="noopener noreferrer"
               className="block overflow-hidden rounded-lg border border-[#302c37] bg-[#0d0c11] p-3 transition-colors hover:border-[#7d2ae8]/60"
             >
-              <img
+              <Image
                 src={publishedUrl}
                 alt="Profile Card Preview"
-                className="mx-auto max-h-64 max-w-full rounded"
+                width={800}
+                height={400}
+                unoptimized
+                className="mx-auto max-h-64 max-w-full rounded object-contain"
               />
             </a>
 
@@ -4243,16 +4251,12 @@ export default function EditorPage() {
             <div className="w-[200px] space-y-4 shrink-0">
               <div className="w-full aspect-square bg-[#30363d] rounded-full overflow-hidden relative">
                 {session?.user?.image ? (
-                  <img
+                  <Image
                     src={session.user.image}
                     alt="Avatar"
+                    fill
+                    sizes="200px"
                     className="object-cover"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      height: "100%",
-                      width: "100%",
-                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-zinc-500">
