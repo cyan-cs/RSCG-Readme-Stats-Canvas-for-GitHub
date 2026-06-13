@@ -102,7 +102,6 @@ export const ko = {
   "editor.templates.title": "템플릿",
   "editor.widgets.title": "위젯",
   "editor.zoom.fit": "화면에 맞추기",
-  "editor.zoom.hint": "Ctrl + 휠로 확대/축소",
   "editor.zoom.in": "확대",
   "editor.zoom.out": "축소",
   "editor.zoom.reset": "100%로 재설정",

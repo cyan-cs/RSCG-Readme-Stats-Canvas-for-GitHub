@@ -98,7 +98,6 @@ export const zh = {
   "editor.templates.title": "模板",
   "editor.widgets.title": "小组件",
   "editor.zoom.fit": "适合屏幕",
-  "editor.zoom.hint": "按住 Ctrl 滚轮缩放",
   "editor.zoom.in": "放大",
   "editor.zoom.out": "缩小",
   "editor.zoom.reset": "重置为100%",

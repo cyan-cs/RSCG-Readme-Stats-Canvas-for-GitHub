@@ -100,7 +100,6 @@ export const en = {
   "editor.templates.title": "Templates",
   "editor.widgets.title": "WIDGETS",
   "editor.zoom.fit": "Fit to screen",
-  "editor.zoom.hint": "Ctrl + wheel to zoom",
   "editor.zoom.in": "Zoom in",
   "editor.zoom.out": "Zoom out",
   "editor.zoom.reset": "Reset to 100%",

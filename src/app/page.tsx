@@ -593,13 +593,6 @@ export default function EditorPage() {
       return 1;
     }
   });
-  const [showZoomHint, setShowZoomHint] = useState(() => {
-    try {
-      return localStorage.getItem("rscg-zoom-hint-seen") !== "true";
-    } catch {
-      return true;
-    }
-  });
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const [widthMode, setWidthMode] = useState<SizeMode>(() => {
     try {
@@ -715,13 +708,6 @@ export default function EditorPage() {
     lastPublishedFingerprint !== null &&
     lastPublishedFingerprint !== currentConfigFingerprint;
 
-  const dismissZoomHint = React.useCallback(() => {
-    setShowZoomHint(false);
-    try {
-      localStorage.setItem("rscg-zoom-hint-seen", "true");
-    } catch {}
-  }, []);
-
   const changePreviewZoom = React.useCallback((nextZoom: number) => {
     setPreviewZoom(clampPreviewZoom(nextZoom));
   }, []);
@@ -775,12 +761,11 @@ export default function EditorPage() {
       setPreviewZoom((current) =>
         clampPreviewZoom(current + direction * PREVIEW_ZOOM_STEP),
       );
-      dismissZoomHint();
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
-  }, [dismissZoomHint]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -5058,21 +5043,6 @@ export default function EditorPage() {
         >
           {t("editor.snap8px")}
         </span>
-        {showZoomHint && (
-          <>
-            <div className="mx-1 h-5 w-px bg-[#35313d]" />
-            <span className="pl-2 text-[10px] text-zinc-500">
-              {t("editor.zoom.hint")}
-            </span>
-            <button
-              onClick={dismissZoomHint}
-              className="flex h-7 w-7 items-center justify-center rounded text-zinc-600 hover:bg-[#292630] hover:text-white"
-              aria-label={t("actions.close")}
-            >
-              <X size={12} />
-            </button>
-          </>
-        )}
       </div>
 
       {/* Mobile right panel backdrop */}

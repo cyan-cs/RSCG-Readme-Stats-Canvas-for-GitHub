@@ -102,7 +102,6 @@ export const ja = {
   "editor.templates.title": "テンプレート",
   "editor.widgets.title": "ウィジェット",
   "editor.zoom.fit": "画面に合わせる",
-  "editor.zoom.hint": "Ctrl + ホイールでズーム",
   "editor.zoom.in": "拡大",
   "editor.zoom.out": "縮小",
   "editor.zoom.reset": "100%に戻す",
